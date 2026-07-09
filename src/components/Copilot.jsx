@@ -89,6 +89,15 @@ export default function Copilot() {
     }
   };
 
+  // Check for prefilled queries from other pages on load/mount
+  useEffect(() => {
+    const prefilled = localStorage.getItem('copilot_prefilled_query');
+    if (prefilled) {
+      localStorage.removeItem('copilot_prefilled_query');
+      handleSend(prefilled);
+    }
+  }, []);
+
   return (
     <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -126,7 +135,7 @@ export default function Copilot() {
             boxShadow: '0 0 8px var(--secondary)'
           }} />
           <BrainCircuit size={18} color="var(--primary)" />
-          <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Google Gemini 2.0 Flash Agent</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-primary)' }}>Google Gemini 2.0 Flash Agent</span>
           <span style={{
             fontSize: '0.65rem',
             color: 'var(--secondary)',
@@ -179,7 +188,7 @@ export default function Copilot() {
                 <div>
                   <div style={{
                     backgroundColor: msg.isError ? 'rgba(239, 68, 68, 0.1)' : isAi ? 'var(--bg-secondary)' : 'var(--primary)',
-                    color: 'white',
+                    color: isAi ? 'var(--text-primary)' : '#ffffff',
                     padding: '14px 18px',
                     borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px',
                     border: msg.isError ? '1px solid var(--danger)' : isAi ? '1px solid var(--border-color)' : 'none',
@@ -288,7 +297,7 @@ export default function Copilot() {
               onMouseEnter={(e) => {
                 if (!isTyping) {
                   e.currentTarget.style.borderColor = 'var(--primary)';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
               onMouseLeave={(e) => {

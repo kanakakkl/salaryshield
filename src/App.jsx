@@ -31,7 +31,7 @@ function App() {
       <div style={{ flex: 1 }}>
         {activeTab === 'employer' && <EmployerDashboard />}
         {activeTab === 'employee' && <EmployeePortal />}
-        {activeTab === 'budget' && <BudgetPlanner />}
+        {activeTab === 'budget' && <BudgetPlanner setActiveTab={setActiveTab} />}
         {activeTab === 'inflation' && <InflationEngine />}
         {activeTab === 'copilot' && <Copilot />}
       </div>

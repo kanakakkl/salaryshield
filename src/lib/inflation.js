@@ -25,7 +25,9 @@ export const EXPENSE_CATEGORIES = [
 export const DEFAULT_BUDGET = {
   city: 'Hyderabad',
   income: 150000,
-  expenses: { rent: 35000, loan: 25000, children: 20000, groceries: 18000, utilities: 8000, transport: 7000, misc: 10000 }
+  nominalSalary: 2500000,
+  expenses: { rent: 35000, loan: 25000, children: 20000, groceries: 18000, utilities: 8000, transport: 7000, misc: 10000 },
+  allocation: { equity: 40, debt: 30, gold: 15, cash: 15 }
 };
 
 export const BUDGET_STORAGE_KEY = 'salaryshield_budget_v1';
@@ -55,7 +57,7 @@ export function analyzeBudget(budget) {
   const projectedSavings = income - projectedExpenses;
   const annualInflationTax = totalMonthlyIncrease * 12;
   // Expense-weighted "personal inflation" — reflects THIS person's spending mix.
-  const personalInflation = totalExpenses > 0 ? (totalMonthlyIncrease / totalExpenses) * 100 : 0;
+  const personalInflation = totalExpenses > 0 ? (totalMonthlyIncrease / totalExpenses) * 100 : clii.total;
   // Raise needed just to keep today's savings intact next year.
   const breakEvenHike = income > 0 ? (totalMonthlyIncrease / income) * 100 : 0;
 
@@ -84,7 +86,8 @@ export function loadBudget() {
         expenses: {
           ...DEFAULT_BUDGET.expenses,
           ...parsed.expenses
-        }
+        },
+        allocation: parsed.allocation || DEFAULT_BUDGET.allocation
       };
     }
   } catch { /* ignore corrupt storage */ }

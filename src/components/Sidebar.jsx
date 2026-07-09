@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -13,6 +13,7 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
+import { loadBudget } from '../lib/inflation';
 
 export default function Sidebar({ activeTab, setActiveTab, theme, setTheme }) {
   const menuItems = [
@@ -22,6 +23,43 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme }) {
     { id: 'inflation', label: 'Inflation Index (CLII)', icon: TrendingUp },
     { id: 'copilot', label: 'GenAI Salary Copilot', icon: MessageSquareCode },
   ];
+
+  // Pull the employee's salary dynamically from the loaded budget
+  const [salaryLPA, setSalaryLPA] = useState(() => {
+    const b = loadBudget();
+    return (b.nominalSalary || 2500000) / 100000;
+  });
+
+  const [isEditingSalary, setIsEditingSalary] = useState(false);
+  const [salaryInputVal, setSalaryInputVal] = useState(salaryLPA.toString());
+  const [role, setRole] = useState(() => localStorage.getItem('salaryshield_user_role') || 'Tech Lead');
+
+  useEffect(() => {
+    const syncSalary = () => {
+      const b = loadBudget();
+      const currentVal = (b.nominalSalary || 2500000) / 100000;
+      setSalaryLPA(currentVal);
+      if (!isEditingSalary) {
+        setSalaryInputVal(currentVal.toString());
+      }
+      const storedRole = localStorage.getItem('salaryshield_user_role') || 'Tech Lead';
+      setRole(storedRole);
+    };
+    syncSalary();
+    const id = setInterval(syncSalary, 1000);
+    return () => clearInterval(id);
+  }, [isEditingSalary]);
+
+  const handleSalarySave = (newVal) => {
+    const num = parseFloat(newVal);
+    if (!isNaN(num) && num > 0) {
+      const b = loadBudget();
+      b.nominalSalary = num * 100000;
+      localStorage.setItem('salaryshield_budget_v1', JSON.stringify(b));
+      setSalaryLPA(num);
+    }
+    setIsEditingSalary(false);
+  };
 
   return (
     <div style={{
@@ -216,7 +254,7 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme }) {
           </div>
           <div>
             <h4 style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Priya Sharma</h4>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Tech Lead</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{role}</span>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -225,8 +263,44 @@ export default function Sidebar({ activeTab, setActiveTab, theme, setTheme }) {
             <span>Hyderabad, India</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            <CreditCard size={12} />
-            <span>Salary: ₹25.0 LPA</span>
+            <CreditCard size={12} style={{ flexShrink: 0 }} />
+            {isEditingSalary ? (
+              <input
+                type="number"
+                step="0.5"
+                min="1"
+                value={salaryInputVal}
+                onChange={(e) => setSalaryInputVal(e.target.value)}
+                onBlur={() => handleSalarySave(salaryInputVal)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSalarySave(salaryInputVal);
+                  if (e.key === 'Escape') setIsEditingSalary(false);
+                }}
+                autoFocus
+                style={{
+                  width: '80px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--primary)',
+                  borderRadius: '4px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.72rem',
+                  padding: '2px 4px',
+                  outline: 'none',
+                  fontWeight: '600'
+                }}
+              />
+            ) : (
+              <span 
+                onClick={() => {
+                  setSalaryInputVal(salaryLPA.toString());
+                  setIsEditingSalary(true);
+                }}
+                style={{ cursor: 'pointer', borderBottom: '1px dashed var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                title="Click to edit annual base salary"
+              >
+                Salary: ₹{salaryLPA.toFixed(1)} LPA ✏️
+              </span>
+            )}
           </div>
         </div>
       </div>

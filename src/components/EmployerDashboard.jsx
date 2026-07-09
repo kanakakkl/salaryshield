@@ -15,7 +15,10 @@ import { analyzeWorkforce, fmtINR } from '../lib/inflation';
 
 export default function EmployerDashboard() {
   // Budget Simulator state
-  const [hikePercentage, setHikePercentage] = useState(3.5);
+  const [hikePercentage, setHikePercentage] = useState(() => {
+    const val = localStorage.getItem('salaryshield_employer_hike');
+    return val ? parseFloat(val) : 3.5;
+  });
 
   // Live-sync ticker — recomputes the "synced Xs ago" clock every second so the
   // console reads as a live stream. Resets on a ~20s cadence.
@@ -24,6 +27,10 @@ export default function EmployerDashboard() {
     const id = setInterval(() => setSyncSecs((s) => (s + 1) % 20), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('salaryshield_employer_hike', hikePercentage);
+  }, [hikePercentage]);
 
   // Everything below is DERIVED from the workforce dataset + live CLII index.
   const wf = analyzeWorkforce(hikePercentage);

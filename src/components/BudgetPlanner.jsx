@@ -13,7 +13,8 @@ import {
   Info,
   Gauge,
   RotateCcw,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowRight
 } from 'lucide-react';
 import {
   cliiData,
@@ -36,18 +37,20 @@ const ICONS = {
   misc: MoreHorizontal
 };
 
-export default function BudgetPlanner() {
+export default function BudgetPlanner({ setActiveTab }) {
   const initial = loadBudget();
   const [city, setCity] = useState(initial.city);
   const [income, setIncome] = useState(initial.income);
+  const [nominalSalary, setNominalSalary] = useState(initial.nominalSalary || 2500000);
   const [expenses, setExpenses] = useState(initial.expenses);
+  const [allocation, setAllocation] = useState(initial.allocation || { equity: 40, debt: 30, gold: 15, cash: 15 });
 
   // Persist inputs so the demo survives a page refresh
   useEffect(() => {
-    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify({ city, income, expenses }));
-  }, [city, income, expenses]);
+    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify({ city, income, nominalSalary, expenses, allocation }));
+  }, [city, income, nominalSalary, expenses, allocation]);
 
-  const a = analyzeBudget({ city, income, expenses });
+  const a = analyzeBudget({ city, income, nominalSalary, expenses });
   const clii = a.clii;
 
   const setExpense = (id, value) => {
@@ -58,7 +61,45 @@ export default function BudgetPlanner() {
   const resetSample = () => {
     setCity(DEFAULT_BUDGET.city);
     setIncome(DEFAULT_BUDGET.income);
+    setNominalSalary(DEFAULT_BUDGET.nominalSalary);
     setExpenses(DEFAULT_BUDGET.expenses);
+    setAllocation(DEFAULT_BUDGET.allocation);
+  };
+
+  const handleAllocationChange = (key, value) => {
+    const newVal = Math.max(0, Math.min(100, Number(value)));
+    const diff = newVal - allocation[key];
+    const otherKeys = Object.keys(allocation).filter((k) => k !== key);
+    const sumOthers = otherKeys.reduce((s, k) => s + allocation[k], 0);
+
+    let next = { ...allocation, [key]: newVal };
+    if (sumOthers > 0) {
+      otherKeys.forEach((k) => {
+        const proportion = allocation[k] / sumOthers;
+        next[k] = Math.max(0, Math.min(100, Math.round((allocation[k] - diff * proportion) * 10) / 10));
+      });
+    } else {
+      otherKeys.forEach((k) => {
+        next[k] = Math.max(0, Math.min(100, Math.round(((100 - newVal) / 3) * 10) / 10));
+      });
+    }
+
+    const finalSum = Object.values(next).reduce((s, v) => s + v, 0);
+    if (finalSum !== 100) {
+      const err = 100 - finalSum;
+      next[otherKeys[0]] = Math.max(0, Math.min(100, Math.round((next[otherKeys[0]] + err) * 10) / 10));
+    }
+    setAllocation(next);
+  };
+
+  const applyPreset = (presetName) => {
+    if (presetName === 'aggressive') {
+      setAllocation({ equity: 70, debt: 10, gold: 15, cash: 5 });
+    } else if (presetName === 'balanced') {
+      setAllocation({ equity: 40, debt: 30, gold: 15, cash: 15 });
+    } else if (presetName === 'preservation') {
+      setAllocation({ equity: 15, debt: 50, gold: 15, cash: 20 });
+    }
   };
 
   const maxRow = Math.max(...a.rows.map((r) => r.amount), 1);
@@ -75,6 +116,34 @@ export default function BudgetPlanner() {
   const areaPath = `${linePath} L ${px(12).toFixed(1)},118 L ${px(0).toFixed(1)},118 Z`;
   const zeroY = py(0);
   const endsNegative = series[12] < 0;
+
+  // Investment Allocator Calculations
+  const availableSavings = Math.max(0, a.savings);
+  const eqAmt = (availableSavings * allocation.equity) / 100;
+  const debtAmt = (availableSavings * allocation.debt) / 100;
+  const goldAmt = (availableSavings * allocation.gold) / 100;
+  const cashAmt = (availableSavings * allocation.cash) / 100;
+
+  const portfolioReturn = (
+    (allocation.equity * 12.0) +
+    (allocation.debt * 7.2) +
+    (allocation.gold * 8.5) +
+    (allocation.cash * 6.0)
+  ) / 100;
+
+  const netRealReturn = portfolioReturn - a.personalInflation;
+
+  // 3-Year Future Value Compounding (compounded monthly)
+  const months = 36;
+  const nominalRate = (portfolioReturn / 100) / 12;
+  const fvNominal = nominalRate > 0 
+    ? availableSavings * ((Math.pow(1 + nominalRate, months) - 1) / nominalRate)
+    : availableSavings * months;
+
+  const realRate = (netRealReturn / 100) / 12;
+  const fvReal = realRate !== 0
+    ? availableSavings * ((Math.pow(1 + realRate, months) - 1) / realRate)
+    : availableSavings * months;
 
   return (
     <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
@@ -113,6 +182,23 @@ export default function BudgetPlanner() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <Wallet size={22} color="var(--primary)" />
             <h2 style={{ fontSize: '1.25rem' }}>Your Monthly Numbers</h2>
+          </div>
+
+          {/* Annual Nominal Salary */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px', fontWeight: '600' }}>ANNUAL NOMINAL SALARY (LPA)</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number" min="0" step="0.5" value={nominalSalary / 100000}
+                onChange={(e) => setNominalSalary(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value) * 100000 || 0))}
+                style={{
+                  width: '100%', padding: '12px 14px', borderRadius: '8px',
+                  backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--primary)',
+                  color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '700', outline: 'none'
+                }}
+              />
+              <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>LPA</span>
+            </div>
           </div>
 
           {/* Income */}
@@ -313,6 +399,36 @@ export default function BudgetPlanner() {
             </div>
           </div>
 
+          {/* GenAI Copilot consultation redirect */}
+          <button 
+            onClick={() => {
+              // Prefill the query in local storage so the Copilot can auto-send or focus it!
+              localStorage.setItem('copilot_prefilled_query', `Based on my budget planner, my personal inflation is ${a.personalInflation.toFixed(1)}% and I need a raise of ${a.breakEvenHike.toFixed(1)}% to break even in ${city}. How should I negotiate this package adjust?`);
+              setActiveTab('copilot');
+            }}
+            style={{
+              marginTop: '14px',
+              width: '100%',
+              padding: '12px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%)',
+              color: 'white',
+              fontSize: '0.82rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 12px var(--primary-glow)'
+            }}
+          >
+            <span>Ask GenAI Copilot to Shield Your Salary</span>
+            <ArrowRight size={14} />
+          </button>
+
           {a.projectedSavings < 0 && (
             <div style={{
               marginTop: '14px', padding: '12px', borderRadius: '8px',
@@ -370,6 +486,139 @@ export default function BudgetPlanner() {
           }}>
             <Info size={16} color="var(--secondary)" style={{ flexShrink: 0, marginTop: '1px' }} />
             <span><strong style={{ color: 'var(--secondary)' }}>Insight:</strong> your loan EMIs stay fixed while everything else inflates — so debt repayment is effectively an inflation hedge. Rent &amp; education are your biggest inflation drivers.</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Savings Plan & Investment Allocator (Full Width) */}
+      <div className="glass-panel" style={{ padding: '28px', marginTop: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <TrendingUp size={22} color="var(--secondary)" />
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Inflation-Shielded Investment & Savings Planner</h2>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Strategize how to allocate your monthly savings of <strong>{fmtINR(availableSavings)}</strong> to hedge against purchasing power losses.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => applyPreset('aggressive')}
+              style={{
+                padding: '6px 12px', fontSize: '0.75rem', fontWeight: '700', borderRadius: '20px', border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >🔥 Aggressive (SIP heavy)</button>
+            <button
+              onClick={() => applyPreset('balanced')}
+              style={{
+                padding: '6px 12px', fontSize: '0.75rem', fontWeight: '700', borderRadius: '20px', border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >⚖️ Balanced Hedge</button>
+            <button
+              onClick={() => applyPreset('preservation')}
+              style={{
+                padding: '6px 12px', fontSize: '0.75rem', fontWeight: '700', borderRadius: '20px', border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)', color: 'var(--text-primary)', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >🛡️ Capital Preservation</button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '7fr 5fr', gap: '30px' }}>
+          {/* Sliders */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div>
+              <div className="flex-between" style={{ fontSize: '0.82rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>📈 Equity Mutual Funds / SIPs (Expected Return: 12.0%)</span>
+                <span style={{ fontWeight: '700', color: 'var(--secondary)' }}>{allocation.equity}% ({fmtINR(eqAmt)}/mo)</span>
+              </div>
+              <input
+                type="range" min="0" max="100" value={allocation.equity}
+                onChange={(e) => handleAllocationChange('equity', e.target.value)}
+                style={{ width: '100%', accentColor: 'var(--secondary)', cursor: 'pointer' }}
+              />
+            </div>
+
+            <div>
+              <div className="flex-between" style={{ fontSize: '0.82rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>🛡️ Fixed Income / PPF / EPF (Expected Return: 7.2%)</span>
+                <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{allocation.debt}% ({fmtINR(debtAmt)}/mo)</span>
+              </div>
+              <input
+                type="range" min="0" max="100" value={allocation.debt}
+                onChange={(e) => handleAllocationChange('debt', e.target.value)}
+                style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
+              />
+            </div>
+
+            <div>
+              <div className="flex-between" style={{ fontSize: '0.82rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>🏆 Gold Bonds / Commodities (Expected Return: 8.5%)</span>
+                <span style={{ fontWeight: '700', color: 'var(--accent)' }}>{allocation.gold}% ({fmtINR(goldAmt)}/mo)</span>
+              </div>
+              <input
+                type="range" min="0" max="100" value={allocation.gold}
+                onChange={(e) => handleAllocationChange('gold', e.target.value)}
+                style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+              />
+            </div>
+
+            <div>
+              <div className="flex-between" style={{ fontSize: '0.82rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>💵 Cash & Liquid FDs (Expected Return: 6.0%)</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-secondary)' }}>{allocation.cash}% ({fmtINR(cashAmt)}/mo)</span>
+              </div>
+              <input
+                type="range" min="0" max="100" value={allocation.cash}
+                onChange={(e) => handleAllocationChange('cash', e.target.value)}
+                style={{ width: '100%', accentColor: 'var(--text-secondary)', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+
+          {/* Impact Stats */}
+          <div style={{ backgroundColor: 'var(--bg-inner-dark)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600' }}>PORTFOLIO YIELD</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--secondary)' }}>{portfolioReturn.toFixed(2)}%</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600' }}>PERSONAL INFLATION</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--danger)' }}>{a.personalInflation.toFixed(1)}%</span>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600' }}>NET REAL YIELD</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '800', color: netRealReturn >= 0 ? 'var(--secondary)' : 'var(--danger)' }}>
+                {netRealReturn >= 0 ? '+' : ''}{netRealReturn.toFixed(2)}%
+              </span>
+            </div>
+
+            <div style={{
+              padding: '10px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: '700', textAlign: 'center',
+              backgroundColor: netRealReturn >= 0 ? 'var(--secondary-glow)' : 'var(--danger-glow)',
+              color: netRealReturn >= 0 ? 'var(--secondary)' : 'var(--danger)',
+              border: '1px solid var(--border-color)'
+            }}>
+              {netRealReturn >= 0 ? '✅ Inflation-Shielded Portfolio Yield' : '⚠️ Inflation-Vulnerable Yield (Eroding Capital)'}
+            </div>
+
+            {/* 3-Year Projection Summary */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600', display: 'block', marginBottom: '8px' }}>3-YEAR SIP VALUE PROJECTION</span>
+              <div className="flex-between" style={{ fontSize: '0.82rem', marginBottom: '4px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Nominal SIP Future Value:</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{fmtINR(fvNominal)}</span>
+              </div>
+              <div className="flex-between" style={{ fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Inflation-Adjusted Value:</span>
+                <span style={{ fontWeight: '700', color: netRealReturn >= 0 ? 'var(--secondary)' : 'var(--danger)' }}>{fmtINR(fvReal)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
