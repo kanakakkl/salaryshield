@@ -9,10 +9,12 @@ import {
   CreditCard,
   Building,
   UserCheck,
-  Wallet
+  Wallet,
+  Sun,
+  Moon
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab }) {
+export default function Sidebar({ activeTab, setActiveTab, theme, setTheme }) {
   const menuItems = [
     { id: 'employer', label: 'Employer Console', icon: Building },
     { id: 'employee', label: 'Employee Portal', icon: UserCheck },
@@ -24,15 +26,20 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   return (
     <div style={{
       width: 'var(--sidebar-width)',
-      height: '100vh',
-      backgroundColor: 'var(--bg-secondary)',
-      borderRight: '1px solid var(--border-color)',
+      height: 'calc(100vh - 40px)',
+      backgroundColor: 'var(--bg-card)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid var(--border-color)',
+      borderRadius: '24px',
+      boxShadow: '0 8px 32px var(--shadow-color)',
       display: 'flex',
       flexDirection: 'column',
       position: 'fixed',
-      left: 0,
-      top: 0,
-      zIndex: 10
+      left: '20px',
+      top: '20px',
+      zIndex: 10,
+      overflow: 'hidden'
     }}>
       {/* Brand Header */}
       <div style={{
@@ -50,7 +57,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 15px var(--primary)'
+          boxShadow: '0 0 15px var(--primary-glow)'
         }}>
           <ShieldAlert size={20} color="white" />
         </div>
@@ -58,7 +65,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           <h2 style={{
             fontSize: '1.25rem',
             fontWeight: '700',
-            background: 'linear-gradient(to right, #ffffff, var(--primary))',
+            background: 'linear-gradient(to right, var(--text-primary), var(--primary))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             letterSpacing: '0.02em'
@@ -104,11 +111,11 @@ export default function Sidebar({ activeTab, setActiveTab }) {
                 fontWeight: isActive ? '600' : '400',
                 textAlign: 'left',
                 transition: 'all 0.2s ease',
-                boxShadow: isActive ? '0 4px 15px rgba(139, 92, 24px, 0.25)' : 'none'
+                boxShadow: isActive ? '0 4px 15px var(--primary-glow)' : 'none'
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-inner-white-03)';
                   e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
@@ -126,11 +133,66 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         })}
       </nav>
 
+      {/* Theme Toggler Segmented Control */}
+      <div style={{
+        padding: '14px 16px',
+        borderTop: '1px solid var(--border-color)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Appearance</span>
+        <div style={{
+          display: 'flex',
+          backgroundColor: 'var(--bg-primary)',
+          borderRadius: '20px',
+          padding: '2px',
+          border: '1px solid var(--border-color)'
+        }}>
+          <button 
+            onClick={() => setTheme('light')}
+            style={{
+              background: theme === 'light' ? 'var(--primary)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: '20px',
+              color: theme === 'light' ? '#fff' : 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            title="Light Theme"
+          >
+            <Sun size={14} />
+          </button>
+          <button 
+            onClick={() => setTheme('dark')}
+            style={{
+              background: theme === 'dark' ? 'var(--primary)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: '20px',
+              color: theme === 'dark' ? '#fff' : 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            title="Dark Theme"
+          >
+            <Moon size={14} />
+          </button>
+        </div>
+      </div>
+
       {/* Interactive Profile Widget - Linking to the Hackathon Storyline */}
       <div style={{
         padding: '16px',
         borderTop: '1px solid var(--border-color)',
-        backgroundColor: 'rgba(0, 0, 0, 0.15)'
+        backgroundColor: 'var(--bg-inner-dark-light)'
       }}>
         <div style={{
           display: 'flex',
@@ -147,7 +209,8 @@ export default function Sidebar({ activeTab, setActiveTab }) {
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '600',
-            fontSize: '0.85rem'
+            fontSize: '0.85rem',
+            color: 'white'
           }}>
             PS
           </div>

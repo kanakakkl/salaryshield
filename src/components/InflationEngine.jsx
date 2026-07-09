@@ -63,7 +63,7 @@ export default function InflationEngine() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '30px 40px', marginLeft: 'var(--sidebar-width)', minHeight: '100vh' }}>
+    <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
       
       {/* Top Header */}
       <div className="flex-between" style={{ marginBottom: '32px' }}>
@@ -72,8 +72,8 @@ export default function InflationEngine() {
           <p style={{ color: 'var(--text-secondary)' }}>Real-time microeconomic intelligence. We ingest direct rental prices, consumer basket indices, and travel expenses.</p>
         </div>
         <div style={{
-          backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          border: '1px solid rgba(245, 158, 11, 0.2)',
+          backgroundColor: 'var(--accent-glow)',
+          border: '1px solid var(--border-color)',
           borderRadius: '10px',
           padding: '8px 16px',
           display: 'flex',
@@ -88,7 +88,7 @@ export default function InflationEngine() {
       </div>
 
       {/* Intro info box */}
-      <div className="glass-panel-accent" style={{ padding: '20px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: 'rgba(16, 185, 129, 0.03)' }}>
+      <div className="glass-panel-accent" style={{ padding: '20px', marginBottom: '32px', display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: 'var(--bg-inner-white-03)' }}>
         <Layers size={36} color="var(--secondary)" style={{ flexShrink: 0 }} />
         <div>
           <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '4px' }}>Why CLII matters over traditional Consumer Price Index (CPI)?</h4>
@@ -115,7 +115,7 @@ export default function InflationEngine() {
                 style={{
                   padding: '16px',
                   borderRadius: '12px',
-                  backgroundColor: isSelected ? 'var(--bg-secondary)' : 'rgba(255,255,255,0.01)',
+                  backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-inner-white-01)',
                   border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                   cursor: 'pointer',
                   display: 'flex',
@@ -157,7 +157,7 @@ export default function InflationEngine() {
                 <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Rent & Housing Cost Premium (Weight: 35%)</span>
                 <span style={{ color: 'var(--danger)', fontWeight: '600' }}>{activeData.housing}% Inflation</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: `${(activeData.housing / 15) * 100}%`, height: '100%', backgroundColor: 'var(--danger)' }}></div>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function InflationEngine() {
                 <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Food, Retail & FMCG Basket (Weight: 25%)</span>
                 <span style={{ color: 'var(--accent)', fontWeight: '600' }}>{activeData.food}% Inflation</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: `${(activeData.food / 15) * 100}%`, height: '100%', backgroundColor: 'var(--accent)' }}></div>
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function InflationEngine() {
                 <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Fuel, Logistics & Commute (Weight: 20%)</span>
                 <span style={{ color: 'var(--primary)', fontWeight: '600' }}>{activeData.transport}% Inflation</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: `${(activeData.transport / 15) * 100}%`, height: '100%', backgroundColor: 'var(--primary)' }}></div>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function InflationEngine() {
                 <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Healthcare & Shared Utilities (Weight: 20%)</span>
                 <span style={{ color: '#3b82f6', fontWeight: '600' }}>{activeData.utilities}% Inflation</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: `${(activeData.utilities / 15) * 100}%`, height: '100%', backgroundColor: '#3b82f6' }}></div>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function InflationEngine() {
             <h4 style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>12-Month CLII Trend Progression</h4>
             <div style={{ 
               height: '140px', 
-              backgroundColor: 'rgba(0,0,0,0.15)', 
+              backgroundColor: 'var(--bg-inner-dark-light)', 
               border: '1px solid var(--border-color)',
               borderRadius: '8px',
               position: 'relative',
@@ -206,9 +206,9 @@ export default function InflationEngine() {
             }}>
               <svg width="100%" height="100%" viewBox="0 0 460 140" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0 }}>
                 {/* Grid Lines */}
-                <line x1="0" y1="35" x2="460" y2="35" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
-                <line x1="0" y1="70" x2="460" y2="70" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
-                <line x1="0" y1="105" x2="460" y2="105" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+                <line x1="0" y1="35" x2="460" y2="35" stroke="var(--border-white-05)" strokeWidth="1" />
+                <line x1="0" y1="70" x2="460" y2="70" stroke="var(--border-white-05)" strokeWidth="1" />
+                <line x1="0" y1="105" x2="460" y2="105" stroke="var(--border-white-05)" strokeWidth="1" />
 
                 {/* Trend line path */}
                 <path 
@@ -218,7 +218,7 @@ export default function InflationEngine() {
                   strokeWidth="3" 
                   strokeLinecap="round"
                   style={{
-                    filter: 'drop-shadow(0 4px 10px rgba(139, 92, 246, 0.4))'
+                    filter: 'drop-shadow(0 4px 10px var(--primary-glow))'
                   }}
                 />
               </svg>
@@ -237,25 +237,25 @@ export default function InflationEngine() {
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '12px' }}>Fused Stream Data Sources</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark-superlight)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>MOSPI API Feed</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--secondary)', display: 'block', margin: '4px 0', fontWeight: '700' }}>Active (200 OK)</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>National Consumer Price Index stream</span>
           </div>
 
-          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark-superlight)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>RBI API Portal</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--secondary)', display: 'block', margin: '4px 0', fontWeight: '700' }}>Active (200 OK)</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Quarterly repo rates & core forecasts</span>
           </div>
 
-          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark-superlight)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>MagicBricks / 99Acres API</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--secondary)', display: 'block', margin: '4px 0', fontWeight: '700' }}>Active (200 OK)</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Rental price tracking (IT Corridors)</span>
           </div>
 
-          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark-superlight)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Zomato / Swiggy Consumer Basket</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--secondary)', display: 'block', margin: '4px 0', fontWeight: '700' }}>Active (200 OK)</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>FMCG / Food delivery pricing surges</span>

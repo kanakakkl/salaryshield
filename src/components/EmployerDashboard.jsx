@@ -1,56 +1,53 @@
-import React, { useState } from 'react';
-import { 
-  Users, 
-  TrendingDown, 
-  DollarSign, 
-  ShieldCheck, 
-  ArrowUpRight, 
+import React, { useState, useEffect } from 'react';
+import {
+  Users,
+  TrendingDown,
+  DollarSign,
+  ShieldCheck,
+  ArrowUpRight,
   AlertTriangle,
   Info,
   Sliders,
-  Award
+  Award,
+  Activity
 } from 'lucide-react';
+import { analyzeWorkforce, fmtINR } from '../lib/inflation';
 
 export default function EmployerDashboard() {
   // Budget Simulator state
   const [hikePercentage, setHikePercentage] = useState(3.5);
 
-  // Workforce constants for simulation
-  const employeeCount = 250;
-  const avgSalary = 1500000; // 15 LPA
-  const annualPayroll = employeeCount * avgSalary; // 37.5 Crores
-  const baseAttritionRisk = 74; // Attrition risk at 0% correction
-  
-  // Dynamic formulas
-  // Attrition Risk drops as hike increases
-  const simulatedAttritionRisk = Math.max(18, Math.round(baseAttritionRisk - hikePercentage * 4.5));
-  
-  // Budget needed
-  const additionalBudget = (annualPayroll * (hikePercentage / 100));
-  
-  // Attrition prevented
-  const baseAttrits = Math.round(employeeCount * (baseAttritionRisk / 100));
-  const newAttrits = Math.round(employeeCount * (simulatedAttritionRisk / 100));
-  const employeesRetained = Math.max(0, baseAttrits - newAttrits);
-  
-  // Savings: Replacement cost is estimated at 1.5x of annual salary per employee
-  const replacementCostPerEmp = avgSalary * 1.5;
-  const replacementSavings = employeesRetained * replacementCostPerEmp;
-  
-  // Net ROI
-  const netSavings = replacementSavings - additionalBudget;
-  const roiMultiplier = additionalBudget > 0 ? (replacementSavings / additionalBudget).toFixed(1) : 0;
+  // Live-sync ticker — recomputes the "synced Xs ago" clock every second so the
+  // console reads as a live stream. Resets on a ~20s cadence.
+  const [syncSecs, setSyncSecs] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setSyncSecs((s) => (s + 1) % 20), 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  // City Data for Heatmap
-  const cities = [
-    { name: 'Hyderabad', employees: 85, inflation: 8.4, avgSalary: '16.5 LPA', gap: '₹1.8L', risk: 'High', color: '#ef4444' },
-    { name: 'Bengaluru', employees: 98, inflation: 7.9, avgSalary: '18.2 LPA', gap: '₹1.6L', risk: 'High', color: '#ef4444' },
-    { name: 'Mumbai', employees: 32, inflation: 9.1, avgSalary: '19.5 LPA', gap: '₹2.1L', risk: 'Critical', color: '#dc2626' },
-    { name: 'Pune', employees: 35, inflation: 6.8, avgSalary: '14.0 LPA', gap: '₹1.2L', risk: 'Medium', color: '#f59e0b' }
-  ];
+  // Everything below is DERIVED from the workforce dataset + live CLII index.
+  const wf = analyzeWorkforce(hikePercentage);
+  const employeeCount = wf.totalHeadcount;
+  const simulatedAttritionRisk = wf.simAttrition;
+  const additionalBudget = wf.additionalBudget;
+  const employeesRetained = wf.employeesRetained;
+  const replacementSavings = wf.replacementSavings;
+  const netSavings = wf.netSavings;
+  const roiMultiplier = wf.roiMultiplier.toFixed(1);
+
+  // Heatmap rows mapped from the derived per-city analysis
+  const cities = wf.cities.map((c) => ({
+    name: c.city,
+    employees: c.employees,
+    inflation: c.clii,
+    avgSalary: `${c.avgLPA.toFixed(1)} LPA`,
+    gap: `₹${c.gapLakh.toFixed(1)}L`,
+    risk: c.threat,
+    color: c.color
+  }));
 
   return (
-    <div className="animate-fade-in" style={{ padding: '30px 40px', marginLeft: 'var(--sidebar-width)', minHeight: '100vh' }}>
+    <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
       
       {/* Top Header */}
       <div className="flex-between" style={{ marginBottom: '32px' }}>
@@ -59,8 +56,8 @@ export default function EmployerDashboard() {
           <p style={{ color: 'var(--text-secondary)' }}>Workforce compensation analysis, real-time inflation tracking & attrition risk modeling.</p>
         </div>
         <div style={{
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          border: '1px solid rgba(16, 185, 129, 0.2)',
+          backgroundColor: 'var(--secondary-glow)',
+          border: '1px solid var(--border-color-hover)',
           borderRadius: '10px',
           padding: '8px 16px',
           display: 'flex',
@@ -155,10 +152,10 @@ export default function EmployerDashboard() {
           </div>
 
           <div style={{ 
-            backgroundColor: 'rgba(0,0,0,0.2)', 
+            backgroundColor: 'var(--bg-inner-dark)', 
             borderRadius: '12px', 
             padding: '20px',
-            border: '1px solid rgba(255,255,255,0.03)'
+            border: '1px solid var(--bg-inner-white-03)'
           }}>
             <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Financial Implications</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -174,7 +171,7 @@ export default function EmployerDashboard() {
                   ₹{(replacementSavings / 100000).toFixed(2)} Lakhs
                 </span>
               </div>
-              <div style={{ gridColumn: 'span 2', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+              <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border-white-06)', paddingTop: '16px' }}>
                 <div className="flex-between">
                   <div>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>NET RETENTION PAYBACK (ROI)</span>
@@ -188,7 +185,7 @@ export default function EmployerDashboard() {
                   </div>
                   {roiMultiplier > 0 && (
                     <div style={{ 
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                      backgroundColor: 'var(--secondary-glow)', 
                       borderRadius: '8px', 
                       padding: '6px 12px', 
                       textAlign: 'right' 
@@ -220,7 +217,7 @@ export default function EmployerDashboard() {
                 <span style={{ color: 'var(--text-secondary)' }}>0-3 Months Lag (Normal)</span>
                 <span style={{ color: 'var(--secondary)', fontWeight: '600' }}>18% Risk</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: '18%', height: '100%', backgroundColor: 'var(--secondary)' }}></div>
               </div>
             </div>
@@ -230,7 +227,7 @@ export default function EmployerDashboard() {
                 <span style={{ color: 'var(--text-secondary)' }}>4-6 Months Lag (Acceptable)</span>
                 <span style={{ color: 'var(--accent)', fontWeight: '600' }}>35% Risk</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: '35%', height: '100%', backgroundColor: 'var(--accent)' }}></div>
               </div>
             </div>
@@ -240,7 +237,7 @@ export default function EmployerDashboard() {
                 <span style={{ color: 'var(--text-secondary)' }}>7-9 Months Lag (High Attrition Zone)</span>
                 <span style={{ color: 'var(--danger)', fontWeight: '600' }}>58% Risk</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ width: '58%', height: '100%', backgroundColor: 'var(--danger)' }}></div>
               </div>
             </div>
@@ -248,10 +245,10 @@ export default function EmployerDashboard() {
             <div>
               <div className="flex-between" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>10-12+ Months Lag (Critical Threat)</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '600', textShadow: '0 0 5px var(--danger)' }}>74% Risk</span>
+                <span style={{ color: 'var(--danger)', fontWeight: '600', textShadow: '0 0 5px var(--danger-glow)' }}>74% Risk</span>
               </div>
-              <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '74%', height: '100%', backgroundColor: '#dc2626' }}></div>
+              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '74%', height: '100%', backgroundColor: 'var(--danger)' }}></div>
               </div>
             </div>
           </div>
@@ -259,14 +256,14 @@ export default function EmployerDashboard() {
           <div style={{ 
             marginTop: '20px', 
             padding: '12px', 
-            backgroundColor: 'rgba(239, 68, 68, 0.05)', 
-            border: '1px dashed rgba(239, 68, 68, 0.2)',
+            backgroundColor: 'var(--danger-glow)', 
+            border: '1px dashed var(--border-color)',
             borderRadius: '8px',
             display: 'flex',
             gap: '8px',
             alignItems: 'center',
             fontSize: '0.78rem',
-            color: '#f87171'
+            color: 'var(--danger)'
           }}>
             <Info size={16} style={{ flexShrink: 0 }} />
             <span>Alert: Over 45% of your product engineering workforce currently resides in the High/Critical Attrition Zone due to local rent inflation.</span>
@@ -286,7 +283,7 @@ export default function EmployerDashboard() {
             <div 
               key={idx} 
               style={{
-                backgroundColor: 'rgba(255,255,255,0.02)',
+                backgroundColor: 'var(--bg-inner-white-02)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '12px',
                 padding: '20px',
@@ -318,7 +315,7 @@ export default function EmployerDashboard() {
                   <span style={{ color: 'var(--text-muted)' }}>Avg Purchasing Power Loss</span>
                   <span style={{ color: 'var(--danger)', fontWeight: '500' }}>-{city.gap}</span>
                 </div>
-                <div className="flex-between" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                <div className="flex-between" style={{ borderTop: '1px solid var(--border-white-05)', paddingTop: '8px', marginTop: '4px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Local Threat Level</span>
                   <span style={{ color: city.color, fontWeight: '700', textTransform: 'uppercase', fontSize: '0.75rem' }}>{city.risk}</span>
                 </div>
@@ -339,29 +336,29 @@ export default function EmployerDashboard() {
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>GENDER WAGE GAP</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent)' }}>5.7%</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Male: ₹15.8L vs Female: ₹14.9L</span>
             </div>
-            <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+            <div style={{ height: '4px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
               <div style={{ width: '94.3%', height: '100%', backgroundColor: 'var(--accent)' }}></div>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>TENURE EQUITY COEFFICIENT</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--secondary)' }}>92%</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Target threshold: &gt;95%</span>
             </div>
-            <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+            <div style={{ height: '4px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
               <div style={{ width: '92%', height: '100%', backgroundColor: 'var(--secondary)' }}></div>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FAIRNESS REMEDIATION BUDGET</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹12.4 Lakhs</span>

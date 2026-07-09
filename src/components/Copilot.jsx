@@ -120,7 +120,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '30px 40px', marginLeft: 'var(--sidebar-width)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* Top Header */}
       <div style={{ marginBottom: '20px' }}>
@@ -136,14 +136,14 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
         overflow: 'hidden',
         marginBottom: '20px',
         border: '1px solid var(--border-color)',
-        backgroundColor: 'rgba(10, 15, 30, 0.4)'
+        backgroundColor: 'var(--bg-card)'
       }}>
         
         {/* Chat Header */}
         <div style={{ 
           padding: '16px 20px', 
           borderBottom: '1px solid var(--border-color)', 
-          backgroundColor: 'rgba(0,0,0,0.15)',
+          backgroundColor: 'var(--bg-inner-dark-light)',
           display: 'flex',
           alignItems: 'center',
           gap: '10px'
@@ -279,7 +279,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
         <div style={{ 
           padding: '12px 20px', 
           borderTop: '1px solid var(--border-color)', 
-          backgroundColor: 'rgba(0,0,0,0.1)',
+          backgroundColor: 'var(--bg-inner-dark-superlight)',
           display: 'flex',
           flexWrap: 'wrap',
           gap: '8px'
@@ -292,7 +292,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
               key={idx}
               onClick={() => handleSend(q.text, q.value)}
               style={{
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'var(--bg-inner-white-03)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '20px',
                 padding: '6px 12px',
@@ -306,7 +306,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.color = 'var(--text-primary)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--border-color)';
@@ -328,7 +328,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
           style={{ 
             padding: '16px 20px', 
             borderTop: '1px solid var(--border-color)', 
-            backgroundColor: 'rgba(0,0,0,0.2)',
+            backgroundColor: 'var(--bg-inner-dark)',
             display: 'flex',
             gap: '12px'
           }}
@@ -344,7 +344,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
               border: '1px solid var(--border-color)',
               borderRadius: '8px',
               padding: '12px 16px',
-              color: 'white',
+              color: 'var(--text-primary)',
               fontSize: '0.9rem',
               outline: 'none',
               transition: 'border-color 0.2s ease'

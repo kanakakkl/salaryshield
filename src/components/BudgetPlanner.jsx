@@ -75,7 +75,7 @@ export default function BudgetPlanner() {
   const endsNegative = series[12] < 0;
 
   return (
-    <div className="animate-fade-in" style={{ padding: '30px 40px', marginLeft: 'var(--sidebar-width)', minHeight: '100vh' }}>
+    <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
 
       {/* Header */}
       <div className="flex-between" style={{ marginBottom: '32px' }}>
@@ -141,7 +141,7 @@ export default function BudgetPlanner() {
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '34px', height: '34px', borderRadius: '8px', flexShrink: 0,
-                    backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-inner-white-03)', border: '1px solid var(--border-color)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <Icon size={16} color={r.color} />
@@ -160,7 +160,7 @@ export default function BudgetPlanner() {
                       style={{
                         width: '100%', padding: '8px 10px 8px 22px', borderRadius: '8px',
                         backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
-                        color: 'white', fontSize: '0.88rem', fontWeight: '600', outline: 'none'
+                        color: 'var(--text-primary)', fontSize: '0.88rem', fontWeight: '600', outline: 'none'
                       }}
                     />
                   </div>
@@ -178,15 +178,15 @@ export default function BudgetPlanner() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>INCOME</span>
               <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{fmtINR(a.income)}</span>
             </div>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>EXPENSES</span>
               <span style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--danger)' }}>{fmtINR(a.totalExpenses)}</span>
             </div>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: `1px solid ${savingsColor}` }}>
+            <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: `1px solid ${savingsColor}` }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>SAVINGS</span>
               <span style={{ fontSize: '1.3rem', fontWeight: '800', color: savingsColor }}>{fmtINR(a.savings)}</span>
             </div>
@@ -198,7 +198,7 @@ export default function BudgetPlanner() {
               <span style={{ color: 'var(--text-secondary)' }}>Savings Rate</span>
               <span style={{ color: savingsColor, fontWeight: '700' }}>{a.savingsRate.toFixed(1)}%</span>
             </div>
-            <div style={{ height: '10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '5px', overflow: 'hidden' }}>
+            <div style={{ height: '10px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '5px', overflow: 'hidden' }}>
               <div style={{ width: `${Math.max(0, Math.min(100, a.savingsRate))}%`, height: '100%', backgroundColor: savingsColor, transition: 'width 0.4s ease' }} />
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
@@ -215,7 +215,7 @@ export default function BudgetPlanner() {
                   <span style={{ color: 'var(--text-secondary)' }}>{r.label}</span>
                   <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{fmtINR(r.amount)} <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>({a.totalExpenses > 0 ? ((r.amount / a.totalExpenses) * 100).toFixed(0) : 0}%)</span></span>
                 </div>
-                <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '6px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{ width: `${(r.amount / maxRow) * 100}%`, height: '100%', backgroundColor: r.color }} />
                 </div>
               </div>
@@ -239,14 +239,14 @@ export default function BudgetPlanner() {
 
           {/* Personal vs city inflation */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+            <div style={{ backgroundColor: 'var(--accent-glow)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>YOUR PERSONAL INFLATION</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent)' }}>{a.personalInflation.toFixed(1)}%</span>
               <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'block' }}>
                 {a.personalInflation >= clii.total ? 'Higher' : 'Lower'} than the {clii.total}% city average
               </span>
             </div>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>{city} HEADLINE CLII</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '800' }}>{clii.total}%</span>
               <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'block' }}>City basket average</span>
@@ -254,7 +254,7 @@ export default function BudgetPlanner() {
           </div>
 
           {/* Numbers */}
-          <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ backgroundColor: 'var(--bg-inner-dark)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="flex-between" style={{ fontSize: '0.85rem' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Extra spend next year (inflation tax)</span>
               <span style={{ color: 'var(--danger)', fontWeight: '700' }}>{fmtINR(a.annualInflationTax)}/yr</span>
@@ -263,7 +263,7 @@ export default function BudgetPlanner() {
               <span style={{ color: 'var(--text-secondary)' }}>Projected monthly expenses</span>
               <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{fmtINR(a.projectedExpenses)} <span style={{ color: 'var(--text-muted)', fontWeight: '400', fontSize: '0.78rem' }}>(+{fmtINR(a.totalMonthlyIncrease)})</span></span>
             </div>
-            <div className="flex-between" style={{ fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+            <div className="flex-between" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--border-white-06)', paddingTop: '12px' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Savings next year (if salary is flat)</span>
               <span style={{ color: a.projectedSavings < 0 ? 'var(--danger)' : a.projectedSavings < a.savings ? 'var(--accent)' : 'var(--secondary)', fontWeight: '800', fontSize: '1.05rem' }}>{fmtINR(a.projectedSavings)}/mo</span>
             </div>
@@ -273,7 +273,7 @@ export default function BudgetPlanner() {
           <div style={{ marginTop: '20px' }}>
             <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>Monthly Savings — Next 12 Months (salary flat)</h4>
             <div style={{
-              height: '140px', backgroundColor: 'rgba(0,0,0,0.15)',
+              height: '140px', backgroundColor: 'var(--bg-inner-dark-light)',
               border: '1px solid var(--border-color)', borderRadius: '8px', position: 'relative', overflow: 'hidden'
             }}>
               <svg width="100%" height="100%" viewBox="0 0 460 140" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -300,7 +300,7 @@ export default function BudgetPlanner() {
           {/* Break-even call-out */}
           <div style={{
             marginTop: '18px', padding: '16px', borderRadius: '10px',
-            backgroundColor: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.25)',
+            backgroundColor: 'var(--primary-glow)', border: '1px solid var(--border-color-hover)',
             display: 'flex', gap: '12px', alignItems: 'center'
           }}>
             <TrendingUp size={26} color="var(--primary)" style={{ flexShrink: 0 }} />
@@ -314,8 +314,8 @@ export default function BudgetPlanner() {
           {a.projectedSavings < 0 && (
             <div style={{
               marginTop: '14px', padding: '12px', borderRadius: '8px',
-              backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px dashed rgba(239, 68, 68, 0.3)',
-              display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.78rem', color: '#f87171'
+              backgroundColor: 'var(--danger-glow)', border: '1px dashed var(--border-color)',
+              display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.78rem', color: 'var(--danger)'
             }}>
               <AlertTriangle size={16} style={{ flexShrink: 0 }} />
               <span>Warning: without a raise, {city} inflation pushes you into a monthly deficit next year.</span>
@@ -340,7 +340,7 @@ export default function BudgetPlanner() {
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0,
-                    backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-inner-white-03)', border: '1px solid var(--border-color)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <Icon size={15} color={r.color} />
@@ -352,7 +352,7 @@ export default function BudgetPlanner() {
                         {r.rate === 0 ? 'Fixed 0%' : `+${fmtINR(r.monthlyIncrease)}/mo`}
                       </span>
                     </div>
-                    <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '6px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '3px', overflow: 'hidden' }}>
                       <div style={{ width: `${(r.rate / 15) * 100}%`, height: '100%', backgroundColor: r.rate === 0 ? 'var(--secondary)' : r.color }} />
                     </div>
                   </div>
@@ -363,7 +363,7 @@ export default function BudgetPlanner() {
 
           <div style={{
             marginTop: '20px', padding: '14px', borderRadius: '8px',
-            backgroundColor: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)',
+            backgroundColor: 'var(--secondary-glow)', border: '1px solid var(--border-color-hover)',
             display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '0.78rem', color: 'var(--text-secondary)'
           }}>
             <Info size={16} color="var(--secondary)" style={{ flexShrink: 0, marginTop: '1px' }} />

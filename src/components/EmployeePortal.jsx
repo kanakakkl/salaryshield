@@ -111,7 +111,7 @@ Priya Sharma`,
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '30px 40px', marginLeft: 'var(--sidebar-width)', minHeight: '100vh' }}>
+    <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
       
       {/* Top Header */}
       <div className="flex-between" style={{ marginBottom: '32px' }}>
@@ -120,8 +120,8 @@ Priya Sharma`,
           <p style={{ color: 'var(--text-secondary)' }}>Track your real earnings, simulate geographical moves, discover skill premiums, and plan your appraisals.</p>
         </div>
         <div style={{
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
+          backgroundColor: 'var(--primary-glow)',
+          border: '1px solid var(--border-color-hover)',
           borderRadius: '10px',
           padding: '8px 16px',
           display: 'flex',
@@ -161,7 +161,7 @@ Priya Sharma`,
             <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>Real Wage Index</span>
           </div>
 
-          <div style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '24px', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ width: '100%', borderTop: '1px solid var(--border-white-06)', marginTop: '24px', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div style={{ textAlign: 'left' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>NOMINAL INCOME</span>
               <span style={{ fontSize: '1.2rem', fontWeight: '700' }}>₹25.0 Lakhs</span>
@@ -170,7 +170,7 @@ Priya Sharma`,
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>REAL INCOME (CLII Adj.)</span>
               <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--danger)' }}>₹23.4 Lakhs</span>
             </div>
-            <div style={{ gridColumn: 'span 2', textAlign: 'center', backgroundColor: 'rgba(239, 68, 68, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+            <div style={{ gridColumn: 'span 2', textAlign: 'center', backgroundColor: 'var(--danger-glow)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.8rem', color: '#f87171', display: 'block' }}>
                 Annual Purchasing Power Lost: <strong>₹{purchasingPowerLoss.toLocaleString('en-IN')}</strong>
               </span>
@@ -186,7 +186,7 @@ Priya Sharma`,
               <h3 style={{ fontSize: '1.25rem' }}>Inflation-Resilient Skill Premium Engine</h3>
             </div>
             {addedSkills.length > 0 && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: '600', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: '600', backgroundColor: 'var(--secondary-glow)', padding: '4px 8px', borderRadius: '6px' }}>
                 +{totalSkillPremiumPercent}% Premium Active
               </span>
             )}
@@ -208,13 +208,13 @@ Priya Sharma`,
                     justifyContent: 'space-between',
                     padding: '12px 16px',
                     borderRadius: '10px',
-                    backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.08)' : 'rgba(255,255,255,0.01)',
-                    border: isSelected ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid var(--border-color)',
+                    backgroundColor: isSelected ? 'var(--primary-glow)' : 'var(--bg-inner-white-01)',
+                    border: isSelected ? '1px solid var(--border-color-hover)' : '1px solid var(--border-color)',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSelected) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                    if (!isSelected) e.currentTarget.style.borderColor = 'var(--border-white-15)';
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected) e.currentTarget.style.borderColor = 'var(--border-color)';
@@ -252,7 +252,7 @@ Priya Sharma`,
             })}
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }} className="flex-between">
+          <div style={{ borderTop: '1px solid var(--border-white-06)', paddingTop: '16px' }} className="flex-between">
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>SIMULATED MARKET VALUE</span>
               <span style={{ fontSize: '1.25rem', fontWeight: '800', color: totalSkillPremiumPercent > 0 ? 'var(--secondary)' : 'var(--text-primary)' }}>
@@ -284,7 +284,7 @@ Priya Sharma`,
           <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>CURRENT CITY</label>
-              <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark)', border: '1px solid var(--border-color)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 Hyderabad
               </div>
             </div>
@@ -312,7 +312,7 @@ Priya Sharma`,
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ backgroundColor: 'var(--bg-inner-dark-light)', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="flex-between" style={{ fontSize: '0.82rem' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Rent / Living Index Difference</span>
               <span style={{ color: rentCostDifference > 0 ? 'var(--danger)' : 'var(--secondary)', fontWeight: '600' }}>
@@ -325,7 +325,7 @@ Priya Sharma`,
                 {inflationDifference > 0 ? `+${inflationDifference}% higher` : `${inflationDifference}% lower`}
               </span>
             </div>
-            <div className="flex-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', marginTop: '4px' }}>
+            <div className="flex-between" style={{ borderTop: '1px solid var(--border-white-06)', paddingTop: '12px', marginTop: '4px' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>EQUIVALENT SALARY IN {selectedCity.toUpperCase()}</span>
                 <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent)' }}>
@@ -359,8 +359,8 @@ Priya Sharma`,
                   fontSize: '0.72rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  backgroundColor: negotiationTopic === 'email' ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
-                  color: 'white'
+                  backgroundColor: negotiationTopic === 'email' ? 'var(--primary)' : 'var(--bg-inner-white-03)',
+                  color: 'var(--text-primary)'
                 }}
               >
                 Written Email
@@ -374,8 +374,8 @@ Priya Sharma`,
                   fontSize: '0.72rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  backgroundColor: negotiationTopic === 'meeting' ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
-                  color: 'white'
+                  backgroundColor: negotiationTopic === 'meeting' ? 'var(--primary)' : 'var(--bg-inner-white-03)',
+                  color: 'var(--text-primary)'
                 }}
               >
                 In-Person Pitch
@@ -386,7 +386,7 @@ Priya Sharma`,
           <div style={{
             display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px',
             padding: '8px 12px', borderRadius: '8px',
-            backgroundColor: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)',
+            backgroundColor: 'var(--primary-glow)', border: '1px solid var(--border-color-hover)',
             fontSize: '0.75rem', color: 'var(--text-secondary)'
           }}>
             <Wallet size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
@@ -399,7 +399,7 @@ Priya Sharma`,
 
           <div style={{
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.25)',
+            backgroundColor: 'var(--bg-inner-dark)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
             padding: '16px',

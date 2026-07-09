@@ -79,3 +79,69 @@ export function loadBudget() {
   } catch { /* ignore corrupt storage */ }
   return DEFAULT_BUDGET;
 }
+
+// ---------------------------------------------------------------------------
+// Employer workforce model — per-city headcount, pay and gender split. The
+// Employer Console derives EVERY metric from this dataset + the live CLII
+// index, so nothing is hardcoded: change CLII or the hike and it all recomputes.
+// ---------------------------------------------------------------------------
+export const WORKFORCE = [
+  { city: 'Hyderabad', employees: 85, avgLPA: 16.5, femaleShare: 0.34, femalePayRatio: 0.945 },
+  { city: 'Bengaluru', employees: 98, avgLPA: 18.2, femaleShare: 0.31, femalePayRatio: 0.950 },
+  { city: 'Mumbai',    employees: 32, avgLPA: 19.5, femaleShare: 0.29, femalePayRatio: 0.930 },
+  { city: 'Pune',      employees: 35, avgLPA: 14.0, femaleShare: 0.33, femalePayRatio: 0.955 }
+];
+
+const threatFor = (clii) =>
+  clii >= 9 ? { label: 'Critical', color: '#dc2626' }
+  : clii >= 8 ? { label: 'High', color: '#ef4444' }
+  : clii >= 7 ? { label: 'Elevated', color: '#f59e0b' }
+  : { label: 'Medium', color: '#f59e0b' };
+
+// hikePercent = the corrective salary hike from the Budget Simulator slider.
+export function analyzeWorkforce(hikePercent = 0) {
+  const cities = WORKFORCE.map((w) => {
+    const clii = (cliiData[w.city] || cliiData.Hyderabad).total;
+    const salary = w.avgLPA * 100000;
+    // Attrition risk rises with local inflation lag; the hike buys it down.
+    const baseRisk = Math.min(85, Math.round(clii * 7 + 17));
+    const simRisk = Math.max(18, Math.round(baseRisk - hikePercent * 4.5));
+    const gapLakh = (w.avgLPA * clii) / 100; // annual purchasing-power loss (₹L)
+    const baseExits = w.employees * (baseRisk / 100);
+    const simExits = w.employees * (simRisk / 100);
+    const retained = Math.max(0, baseExits - simExits);
+    const t = threatFor(clii);
+    return {
+      ...w, clii, salary, baseRisk, simRisk, gapLakh, retained,
+      addlBudget: w.employees * salary * (hikePercent / 100),
+      savings: retained * salary * 1.5, // replacement cost ≈ 1.5× salary
+      threat: t.label, color: t.color
+    };
+  });
+
+  const totalHeadcount = cities.reduce((s, c) => s + c.employees, 0);
+  const wAvg = (sel) => cities.reduce((s, c) => s + c.employees * sel(c), 0) / totalHeadcount;
+
+  const weightedInflation = wAvg((c) => c.clii);
+  const baseAttrition = Math.round(wAvg((c) => c.baseRisk));
+  const simAttrition = Math.round(wAvg((c) => c.simRisk));
+  const additionalBudget = cities.reduce((s, c) => s + c.addlBudget, 0);
+  const replacementSavings = cities.reduce((s, c) => s + c.savings, 0);
+  const employeesRetained = Math.round(cities.reduce((s, c) => s + c.retained, 0));
+  const netSavings = replacementSavings - additionalBudget;
+  const roiMultiplier = additionalBudget > 0 ? replacementSavings / additionalBudget : 0;
+  const annualPayroll = cities.reduce((s, c) => s + c.employees * c.salary, 0);
+
+  // Pay-fairness: weighted gender gap + budget to close it
+  const genderGap = wAvg((c) => (1 - c.femalePayRatio)) * 100;
+  const remediationBudget = cities.reduce(
+    (s, c) => s + c.employees * c.femaleShare * c.salary * (1 - c.femalePayRatio), 0
+  );
+  const tenureEquity = 100 - genderGap * 1.6; // derived proxy index
+
+  return {
+    cities, totalHeadcount, weightedInflation, baseAttrition, simAttrition,
+    additionalBudget, replacementSavings, employeesRetained, netSavings,
+    roiMultiplier, annualPayroll, genderGap, remediationBudget, tenureEquity
+  };
+}
