@@ -18,13 +18,14 @@ export const EXPENSE_CATEGORIES = [
   { id: 'children',  label: 'Children & Education',       cliiKey: 'education', color: 'var(--primary)' },
   { id: 'groceries', label: 'Groceries & Food',          cliiKey: 'food',      color: 'var(--accent)' },
   { id: 'utilities', label: 'Family: Utilities & Health', cliiKey: 'utilities', color: '#3b82f6' },
-  { id: 'transport', label: 'Transport & Commute',        cliiKey: 'transport', color: '#06b6d4' }
+  { id: 'transport', label: 'Transport & Commute',        cliiKey: 'transport', color: '#06b6d4' },
+  { id: 'misc',      label: 'Miscellaneous / Other',     cliiKey: 'total',     color: '#ec4899' }
 ];
 
 export const DEFAULT_BUDGET = {
   city: 'Hyderabad',
   income: 150000,
-  expenses: { rent: 35000, loan: 25000, children: 20000, groceries: 18000, utilities: 8000, transport: 7000 }
+  expenses: { rent: 35000, loan: 25000, children: 20000, groceries: 18000, utilities: 8000, transport: 7000, misc: 10000 }
 };
 
 export const BUDGET_STORAGE_KEY = 'salaryshield_budget_v1';
@@ -75,7 +76,17 @@ export function savingsSeries(analysis) {
 export function loadBudget() {
   try {
     const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
-    if (raw) return { ...DEFAULT_BUDGET, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_BUDGET,
+        ...parsed,
+        expenses: {
+          ...DEFAULT_BUDGET.expenses,
+          ...parsed.expenses
+        }
+      };
+    }
   } catch { /* ignore corrupt storage */ }
   return DEFAULT_BUDGET;
 }

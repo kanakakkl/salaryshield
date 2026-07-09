@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Info,
   Gauge,
-  RotateCcw
+  RotateCcw,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   cliiData,
@@ -31,7 +32,8 @@ const ICONS = {
   children: GraduationCap,
   groceries: ShoppingCart,
   utilities: HeartPulse,
-  transport: Bus
+  transport: Bus,
+  misc: MoreHorizontal
 };
 
 export default function BudgetPlanner() {
@@ -91,7 +93,7 @@ export default function BudgetPlanner() {
               onChange={(e) => setCity(e.target.value)}
               style={{
                 padding: '10px 14px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)', color: 'white', fontSize: '0.9rem', cursor: 'pointer', outline: 'none'
+                border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', outline: 'none'
               }}
             >
               {Object.keys(cliiData).map((c) => <option key={c} value={c}>{c} — {cliiData[c].total}% CLII</option>)}
@@ -124,7 +126,7 @@ export default function BudgetPlanner() {
                 style={{
                   width: '100%', padding: '12px 14px 12px 28px', borderRadius: '8px',
                   backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--primary)',
-                  color: 'white', fontSize: '1.05rem', fontWeight: '700', outline: 'none'
+                  color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '700', outline: 'none'
                 }}
               />
             </div>

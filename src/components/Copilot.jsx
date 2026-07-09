@@ -200,7 +200,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
                 <div>
                   <div style={{
                     backgroundColor: isAi ? 'var(--bg-secondary)' : 'var(--primary)',
-                    color: 'white',
+                    color: isAi ? 'var(--text-primary)' : 'white',
                     padding: '14px 18px',
                     borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px',
                     border: isAi ? '1px solid var(--border-color)' : 'none',

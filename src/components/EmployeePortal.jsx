@@ -299,7 +299,7 @@ Priya Sharma`,
                   borderRadius: '8px',
                   backgroundColor: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
-                  color: 'white',
+                  color: 'var(--text-primary)',
                   fontSize: '0.9rem',
                   outline: 'none',
                   cursor: 'pointer'
@@ -360,7 +360,7 @@ Priya Sharma`,
                   fontWeight: '600',
                   cursor: 'pointer',
                   backgroundColor: negotiationTopic === 'email' ? 'var(--primary)' : 'var(--bg-inner-white-03)',
-                  color: 'var(--text-primary)'
+                  color: negotiationTopic === 'email' ? '#fff' : 'var(--text-secondary)'
                 }}
               >
                 Written Email
@@ -375,7 +375,7 @@ Priya Sharma`,
                   fontWeight: '600',
                   cursor: 'pointer',
                   backgroundColor: negotiationTopic === 'meeting' ? 'var(--primary)' : 'var(--bg-inner-white-03)',
-                  color: 'var(--text-primary)'
+                  color: negotiationTopic === 'meeting' ? '#fff' : 'var(--text-secondary)'
                 }}
               >
                 In-Person Pitch

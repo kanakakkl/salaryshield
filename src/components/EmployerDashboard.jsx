@@ -46,6 +46,33 @@ export default function EmployerDashboard() {
     color: c.color
   }));
 
+  // Dynamic coordinates for SVG Attrition Lag curve (HD visual representation)
+  // Lag months stagnant: 0, 3, 6, 9, 12
+  const getRiskAtLag = (lagMonths) => {
+    const ratio = simulatedAttritionRisk / 74; 
+    if (lagMonths === 0) return Math.round(15 * ratio);
+    if (lagMonths === 3) return Math.round(25 * ratio);
+    if (lagMonths === 6) return Math.round(40 * ratio);
+    if (lagMonths === 9) return Math.round(60 * ratio);
+    return simulatedAttritionRisk; 
+  };
+
+  const r0 = getRiskAtLag(0);
+  const r3 = getRiskAtLag(3);
+  const r6 = getRiskAtLag(6);
+  const r9 = getRiskAtLag(9);
+  const r12 = getRiskAtLag(12);
+
+  const yVal = (risk) => 130 - (risk / 100) * 110;
+  
+  const pathData = `M 10,${yVal(r0)} ` +
+                   `C 110,${yVal(r0)} 110,${yVal(r3)} 120,${yVal(r3)} ` +
+                   `C 220,${yVal(r3)} 220,${yVal(r6)} 230,${yVal(r6)} ` +
+                   `C 330,${yVal(r6)} 330,${yVal(r9)} 340,${yVal(r9)} ` +
+                   `C 440,${yVal(r9)} 440,${yVal(r12)} 450,${yVal(r12)}`;
+
+  const areaData = `${pathData} L 450,130 L 10,130 Z`;
+
   return (
     <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
       
@@ -55,19 +82,35 @@ export default function EmployerDashboard() {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '6px' }}>Employer Intelligence Console</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Workforce compensation analysis, real-time inflation tracking & attrition risk modeling.</p>
         </div>
-        <div style={{
-          backgroundColor: 'var(--secondary-glow)',
-          border: '1px solid var(--border-color-hover)',
-          borderRadius: '10px',
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '0.88rem',
-          color: 'var(--secondary)'
-        }}>
-          <ShieldCheck size={16} />
-          <span>Fair Pay Audit Status: Active & Optimizing</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            backgroundColor: 'var(--accent-glow)',
+            border: '1px solid rgba(245, 158, 11, 0.2)',
+            borderRadius: '10px',
+            padding: '8px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '0.82rem',
+            color: 'var(--accent)'
+          }}>
+            <Activity size={15} className="text-glow-primary" />
+            <span>Live CLII stream · synced {syncSecs}s ago</span>
+          </div>
+          <div style={{
+            backgroundColor: 'var(--secondary-glow)',
+            border: '1px solid var(--border-color-hover)',
+            borderRadius: '10px',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '0.88rem',
+            color: 'var(--secondary)'
+          }}>
+            <ShieldCheck size={16} />
+            <span>Fair Pay Audit: Active</span>
+          </div>
         </div>
       </div>
 
@@ -87,8 +130,8 @@ export default function EmployerDashboard() {
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>AVG NATIONAL INFLATION</span>
             <TrendingDown size={20} color="var(--danger)" />
           </div>
-          <h3 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--danger)' }}>8.05%</h3>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Weighted CLII Index</span>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--danger)' }}>{wf.weightedInflation.toFixed(2)}%</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Headcount-weighted CLII Index</span>
         </div>
 
         <div className="glass-panel" style={{ padding: '20px' }}>
@@ -210,46 +253,68 @@ export default function EmployerDashboard() {
             Historical analysis shows a direct correlation between how long salaries remain stagnant (inflation lag) and Employee Flight Risk.
           </p>
 
-          {/* CSS Chart representing Lag vs Risk */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px' }}>
-            <div>
-              <div className="flex-between" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>0-3 Months Lag (Normal)</span>
-                <span style={{ color: 'var(--secondary)', fontWeight: '600' }}>18% Risk</span>
-              </div>
-              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '18%', height: '100%', backgroundColor: 'var(--secondary)' }}></div>
-              </div>
-            </div>
+          {/* HD SVG Attrition Curve Representation */}
+          <div style={{ flex: 1, position: 'relative', marginTop: '10px' }}>
+            <div style={{
+              height: '160px',
+              backgroundColor: 'var(--bg-inner-dark-light)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '10px'
+            }}>
+              <svg width="100%" height="100%" viewBox="0 0 460 140" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="attritionFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--danger)" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="var(--danger)" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Horizontal Grid lines */}
+                <line x1="0" y1="20" x2="460" y2="20" stroke="var(--border-white-05)" strokeWidth="1" strokeDasharray="3 3" />
+                <line x1="0" y1="75" x2="460" y2="75" stroke="var(--border-white-05)" strokeWidth="1" strokeDasharray="3 3" />
+                <line x1="0" y1="130" x2="460" y2="130" stroke="var(--border-white-05)" strokeWidth="1" />
 
-            <div>
-              <div className="flex-between" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>4-6 Months Lag (Acceptable)</span>
-                <span style={{ color: 'var(--accent)', fontWeight: '600' }}>35% Risk</span>
-              </div>
-              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '35%', height: '100%', backgroundColor: 'var(--accent)' }}></div>
-              </div>
-            </div>
+                {/* Vertical segment markers */}
+                <line x1="120" y1="10" x2="120" y2="130" stroke="var(--border-white-05)" strokeWidth="1" strokeDasharray="2 2" />
+                <line x1="230" y1="10" x2="230" y2="130" stroke="var(--border-white-05)" strokeWidth="1" strokeDasharray="2 2" />
+                <line x1="340" y1="10" x2="340" y2="130" stroke="var(--border-white-05)" strokeWidth="1" strokeDasharray="2 2" />
 
-            <div>
-              <div className="flex-between" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>7-9 Months Lag (High Attrition Zone)</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '600' }}>58% Risk</span>
-              </div>
-              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '58%', height: '100%', backgroundColor: 'var(--danger)' }}></div>
-              </div>
-            </div>
+                {/* Filled Area under curve */}
+                <path d={areaData} fill="url(#attritionFill)" />
 
-            <div>
-              <div className="flex-between" style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>10-12+ Months Lag (Critical Threat)</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '600', textShadow: '0 0 5px var(--danger-glow)' }}>74% Risk</span>
-              </div>
-              <div style={{ height: '8px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '74%', height: '100%', backgroundColor: 'var(--danger)' }}></div>
-              </div>
+                {/* Main Curve Line */}
+                <path 
+                  d={pathData} 
+                  fill="none" 
+                  stroke="var(--danger)" 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 2px 8px var(--danger-glow))' }}
+                />
+
+                {/* Control points / circles */}
+                <circle cx="10" cy={yVal(r0)} r="4" fill="var(--secondary)" />
+                <circle cx="120" cy={yVal(r3)} r="4" fill="var(--secondary)" />
+                <circle cx="230" cy={yVal(r6)} r="4" fill="var(--accent)" />
+                <circle cx="340" cy={yVal(r9)} r="4" fill="var(--danger)" />
+                <circle cx="450" cy={yVal(r12)} r="5" fill="var(--danger)" />
+              </svg>
+              
+              {/* Text labels overlaid on key points */}
+              <div style={{ position: 'absolute', top: `${yVal(r0) - 20}px`, left: '15px', fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: '600' }}>0-3m ({r0}%)</div>
+              <div style={{ position: 'absolute', top: `${yVal(r3) - 20}px`, left: '110px', fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: '600' }}>4-6m ({r3}%)</div>
+              <div style={{ position: 'absolute', top: `${yVal(r6) - 20}px`, left: '220px', fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '600' }}>7-9m ({r6}%)</div>
+              <div style={{ position: 'absolute', top: `${yVal(r12) - 20}px`, right: '15px', fontSize: '0.65rem', color: 'var(--danger)', fontWeight: '700' }}>10-12m ({r12}%)</div>
+            </div>
+            
+            {/* Legend / Axis labels */}
+            <div className="flex-between" style={{ marginTop: '8px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span>Flat Pay (Lag 0m)</span>
+              <span>Inflation Lag Scale (Months stagnant)</span>
+              <span>Lag 12m+</span>
             </div>
           </div>
           
@@ -339,29 +404,29 @@ export default function EmployerDashboard() {
           <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>GENDER WAGE GAP</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent)' }}>5.7%</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Male: ₹15.8L vs Female: ₹14.9L</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent)' }}>{wf.genderGap.toFixed(1)}%</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Overall organizational disparity</span>
             </div>
             <div style={{ height: '4px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
-              <div style={{ width: '94.3%', height: '100%', backgroundColor: 'var(--accent)' }}></div>
+              <div style={{ width: `${100 - wf.genderGap}%`, height: '100%', backgroundColor: 'var(--accent)' }}></div>
             </div>
           </div>
 
           <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>TENURE EQUITY COEFFICIENT</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--secondary)' }}>92%</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--secondary)' }}>{wf.tenureEquity.toFixed(0)}%</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Target threshold: &gt;95%</span>
             </div>
             <div style={{ height: '4px', backgroundColor: 'var(--bg-inner-white-05)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
-              <div style={{ width: '92%', height: '100%', backgroundColor: 'var(--secondary)' }}></div>
+              <div style={{ width: `${wf.tenureEquity}%`, height: '100%', backgroundColor: 'var(--secondary)' }}></div>
             </div>
           </div>
 
           <div style={{ backgroundColor: 'var(--bg-inner-white-02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>FAIRNESS REMEDIATION BUDGET</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹12.4 Lakhs</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹{(wf.remediationBudget / 100000).toFixed(1)} Lakhs</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Required to align outliers</span>
             </div>
             <button style={{
