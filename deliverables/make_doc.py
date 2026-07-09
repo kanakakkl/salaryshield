@@ -60,11 +60,11 @@ tech = [
     ("Frontend", "React 19, Vite 8, JavaScript (JSX)"),
     ("UI / Design", "CSS variables + glassmorphism design system, lucide-react icons"),
     ("State & Persistence", "React Hooks (useState / useEffect), browser localStorage"),
-    ("Domain / Model", "src/lib/inflation.js — CLII model, analyzeBudget(), savingsSeries(), break-even engine"),
-    ("AI (implemented)", "Grounded GenAI Copilot — user budget + CLII injected as context"),
-    ("AI (roadmap)", "LLM gateway → Claude / Azure OpenAI GPT-4o via server proxy, RAG"),
+    ("Domain / Model", "src/lib/inflation.js — CLII model, analyzeBudget(), savingsSeries(), analyzeWorkforce(), break-even engine"),
+    ("AI (implemented)", "src/lib/llm.js — Google Gemini 2.0 Flash, live API calls grounded on user budget + CLII, multi-turn"),
+    ("AI (roadmap)", "Server-side LLM proxy for key security + rate limiting, response streaming"),
     ("Data (roadmap)", "MOSPI CPI, RBI, MagicBricks / 99acres, Zomato / Swiggy ingestion pipeline"),
-    ("Tooling", "oxlint, Vite build (1,779 modules, ~80 KB gzip)"),
+    ("Tooling", "oxlint, Vite build (1,780 modules, ~86 KB gzip)"),
 ]
 tbl = doc.add_table(rows=len(tech), cols=2); tbl.style = "Table Grid"; tbl.alignment = WD_TABLE_ALIGNMENT.LEFT
 tbl.columns[0].width = Inches(2.3); tbl.columns[1].width = Inches(4.2)
@@ -88,12 +88,13 @@ para("Solution Architecture", 17, VIOLET, bold=True, after=6)
 para("SalaryShield is a layered, model-driven single-page application. The presentation layer hosts five "
      "modules; all of them read a single domain model (src/lib/inflation.js), so every metric and every AI "
      "answer is computed from one source of truth. Client state is held in React hooks and persisted to "
-     "localStorage, which is how the user's budget flows from the Budget Planner into the Negotiation Coach "
-     "and the Copilot. The AI layer and live data-ingestion pipeline are staged on the roadmap behind the "
-     "same model boundary.", 10.5, after=10)
+     "localStorage, which is how the user's budget flows from the Budget Planner into the Employee Portal, "
+     "the Negotiation Coach, and the Copilot in real time. The AI layer is live today — the Copilot calls "
+     "Google Gemini directly, grounded in the same model. Only the underlying data-ingestion pipeline "
+     "(replacing modeled CLII figures with live MOSPI/RBI/rent feeds) remains on the roadmap.", 10.5, after=10)
 doc.add_picture("C:/Users/ADMIN/kkl-workspace/salaryshield/deliverables/architecture.png", width=Inches(6.5))
 doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-para("Figure 1 — SalaryShield layered architecture (roadmap items tagged).", 9, GREY, italic=True,
+para("Figure 1 — SalaryShield layered architecture (LIVE and ROADMAP layers tagged).", 9, GREY, italic=True,
      align=WD_ALIGN_PARAGRAPH.CENTER, after=14)
 
 doc.add_page_break()
@@ -115,15 +116,16 @@ sections = [
      "A layered SPA with a single domain model shared by every module (see Figure 1).",
      [("Presentation: ", "five React modules — Employer Console, Employee Portal, My Budget & Inflation, CLII Engine, GenAI Copilot."),
       ("Domain model: ", "src/lib/inflation.js is the single source of truth — CLII data, analyzeBudget(), savingsSeries(), break-even and personal-inflation engine."),
-      ("State: ", "React hooks + localStorage; the user's budget is shared Planner -> Coach -> Copilot."),
-      ("Roadmap boundary: ", "the live LLM gateway and data-ingestion pipeline slot in behind the same model interface.")]),
+      ("State: ", "React hooks + localStorage; the user's budget syncs live across Planner -> Employee Portal -> Coach -> Copilot."),
+      ("AI layer: ", "the GenAI Copilot (src/lib/llm.js) is live today, calling Google Gemini directly through the same model boundary.")]),
 
     ("3. Engineering / Build Quality",
      "The app is clean, verifiable, and production-shaped.",
      [("", "React 19 + Vite 8 SPA; one component per module; CSS-variable design system (glassmorphism)."),
-      ("DRY: ", "domain logic extracted into src/lib/inflation.js and reused by three modules."),
-      ("Testable: ", "pure, deterministic functions (analyzeBudget, savingsSeries) — unit-test-ready."),
-      ("Verified: ", "production build passes (1,779 modules, ~80 KB gzip); oxlint clean; localStorage persistence; live in-browser checks with zero console errors.")]),
+      ("DRY: ", "domain logic extracted into src/lib/inflation.js and reused by all five modules, including the Employer Console's attrition/ROI/fairness math."),
+      ("Testable: ", "pure, deterministic functions (analyzeBudget, savingsSeries, analyzeWorkforce) — unit-test-ready."),
+      ("Cross-module sync: ", "changing city or salary in the Budget Planner propagates live to the Employee Portal, Coach and Copilot within one second."),
+      ("Verified: ", "production build passes (1,780 modules, ~86 KB gzip); oxlint clean; localStorage persistence; live in-browser checks with zero console errors.")]),
 
     ("4. AI Appropriateness",
      "AI is applied only where it adds unique value.",
@@ -133,16 +135,17 @@ sections = [
       ("", "The output is genuinely language-shaped: personalized advice and ready-to-send negotiation scripts.")]),
 
     ("5. AI Implementation",
-     "A grounded, consistent, demo-safe Copilot.",
-     [("", "Natural-language Q&A: 'Am I underpaid?', 'What is my attrition risk?'."),
-      ("RAG-style grounding: ", "the user's live budget + CLII data are injected as context, so answers cite the user's real rupee figures rather than model priors."),
-      ("Consistency: ", "Budget Planner, Negotiation Coach and Copilot all read the same model — one data story."),
-      ("Roadmap: ", "LLM gateway (Claude / Azure OpenAI GPT-4o) behind a server proxy, with a deterministic fallback so the demo survives offline.")]),
+     "A real, live LLM integration — grounded, multi-turn, and consistent.",
+     [("", "The Copilot calls Google Gemini 2.0 Flash directly (src/lib/llm.js) — a live model call, not a scripted response."),
+      ("RAG-style grounding: ", "a system prompt injects the user's live budget, computed metrics, and the full CLII dataset for every city, so answers cite the user's real rupee figures rather than model priors."),
+      ("Multi-turn: ", "full conversation history is passed on every call, so follow-up questions stay in context."),
+      ("Consistency: ", "Budget Planner, Employee Portal, Negotiation Coach and Copilot all read the same model — one data story."),
+      ("Roadmap: ", "a server-side proxy for API key security and rate limiting, plus streaming responses.")]),
 
     ("6. AI Impact",
      "Invisible loss becomes a clear, immediate action.",
      [("Employee: ", "surfaces a hidden ~Rs.1.03L/yr loss and generates a copy-paste, data-backed pitch — improving raise success."),
-      ("Employer: ", "converts attrition risk into ROI — retain a key hire and avoid ~Rs.37.5L in replacement cost."),
+      ("Employer: ", "converts attrition risk into ROI live in the Employer Console — retain a key hire and avoid ~Rs.37.5L in replacement cost, recomputed instantly as the correction hike is adjusted."),
       ("Insight: ", "personalized inflation (e.g. 7.7% vs a 8.4% city average) that no generic calculator provides."),
       ("", "Data becomes a decision in seconds, for both the individual and the organization.")]),
 
@@ -162,10 +165,10 @@ sections = [
 
     ("9. Working Demo",
      "A running, interactive MVP — not slideware.",
-     [("Step 1 — Budget Planner: ", "enter salary & expenses; see live personal inflation, a 12-month savings-depletion chart, and the break-even raise; push rent up to trigger the deficit alert."),
+     [("Step 1 — Budget Planner: ", "enter salary, city & expenses; see live personal inflation, a 12-month savings-depletion chart, and the break-even raise; push rent up to trigger the deficit alert."),
       ("Step 2 — Negotiation Coach: ", "the pitch auto-cites those exact numbers; one-click copy."),
-      ("Step 3 — GenAI Copilot: ", "'Am I underpaid?' answers with the same live figures."),
-      ("Resilience: ", "a deterministic fallback means the demo never breaks, even without a network.")]),
+      ("Step 3 — GenAI Copilot: ", "'Am I underpaid?' triggers a real Google Gemini call that answers with the same live figures."),
+      ("Step 4 — Employer Console: ", "move the corrective-hike slider and watch attrition risk, ROI, and the pay-fairness audit recompute instantly.")]),
 
     ("10. Differentiation",
      "Not another salary calculator.",
@@ -183,9 +186,9 @@ for title, lead, pts in sections:
 
 doc.add_page_break()
 para("Roadmap", 17, VIOLET, bold=True, after=6)
-for bl, tx in [("Now: ", "MVP live — CLII model, five modules, budget engine, grounded Copilot."),
+for bl, tx in [("Now: ", "MVP live — CLII model, five modules, live Employer Console, budget engine, Gemini-powered Copilot."),
                ("Next: ", "live data ingestion (MOSPI / RBI / rent / consumer basket) and the CLII computation pipeline."),
-               ("Next: ", "production LLM gateway (Claude / Azure OpenAI GPT-4o) with streaming responses."),
+               ("Next: ", "server-side LLM proxy for API key security and rate limiting, plus streaming responses."),
                ("Then: ", "HRMS integration, authentication, multi-user, and a historical CLII data moat.")]:
     bullet(tx, bold_lead=bl)
 para("", after=6)

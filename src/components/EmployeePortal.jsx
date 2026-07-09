@@ -10,9 +10,13 @@ import {
   Check,
   Calculator,
   Compass,
-  Wallet
+  Wallet,
+  Sparkles,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
-import { loadBudget, analyzeBudget, fmtINR } from '../lib/inflation';
+import { loadBudget, analyzeBudget, fmtINR, cliiData } from '../lib/inflation';
+import { generateNegotiationScript } from '../lib/llm';
 
 const DYNAMIC_SKILLS_DATABASE = {
   'Tech Lead': {
@@ -81,8 +85,11 @@ export default function EmployeePortal() {
     const b = loadBudget();
     return b.nominalSalary || 2500000;
   });
+  const [homeCity, setHomeCity] = useState(() => loadBudget().city || 'Hyderabad');
 
-  const localInflation = 8.4; // Hyderabad housing + food inflation
+  // Local inflation now tracks the city set in the Budget Planner, instead of
+  // being pinned to Hyderabad regardless of where the user actually lives.
+  const localInflation = (cliiData[homeCity] || cliiData.Hyderabad).total;
   const purchasingPowerLoss = Math.round(nominalSalary * (localInflation / 100));
   const realSalary = nominalSalary - purchasingPowerLoss;
   const realSalaryScore = (100 - localInflation).toFixed(1);
@@ -101,6 +108,7 @@ export default function EmployeePortal() {
       
       const b = loadBudget();
       if (b.nominalSalary) setNominalSalary(b.nominalSalary);
+      if (b.city) setHomeCity(b.city);
     };
     syncState();
     const id = setInterval(syncState, 1000);
@@ -156,13 +164,13 @@ export default function EmployeePortal() {
   }, 0);
   const simulatedSalary = nominalSalary * (1 + totalSkillPremiumPercent / 100);
 
-  // Calculate equivalent cost of living salary
-  const currentCityObj = cityMultipliers['Hyderabad'];
+  // Calculate equivalent cost of living salary (relative to the user's home city)
+  const currentCityObj = cityMultipliers[homeCity] || cityMultipliers.Hyderabad;
   const targetCityObj = cityMultipliers[selectedCity];
-  // Cost factor relative to Hyderabad
+  // Cost factor relative to the home city
   const rentCostDifference = ((targetCityObj.rent - currentCityObj.rent) * 100).toFixed(0);
   const inflationDifference = (targetCityObj.inflation - currentCityObj.inflation).toFixed(1);
-  // Equivalent salary in target city to maintain Hyderabad purchasing power
+  // Equivalent salary in target city to maintain home-city purchasing power
   const equivalentTargetSalary = Math.round(nominalSalary * (targetCityObj.rent / currentCityObj.rent));
 
   // Toggle skills
@@ -211,10 +219,31 @@ Priya Sharma`,
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(scripts[negotiationTopic]);
+    navigator.clipboard.writeText(displayedScript);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
   };
+
+  // AI-generated negotiation script (Gemini) — an alternative to the static
+  // template, written fresh by the model but grounded in the same live data.
+  const [aiScripts, setAiScripts] = useState({});
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  const generateWithAI = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const text = await generateNegotiationScript(budget, negotiationTopic, 'confident');
+      setAiScripts((prev) => ({ ...prev, [negotiationTopic]: text }));
+    } catch (err) {
+      setAiError(err.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const displayedScript = aiScripts[negotiationTopic] || scripts[negotiationTopic];
 
   return (
     <div className="animate-fade-in" style={{ padding: '30px 40px 30px 20px', marginLeft: 'calc(var(--sidebar-width) + 40px)', minHeight: '100vh' }}>
@@ -248,7 +277,7 @@ Priya Sharma`,
         <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
           <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', width: '100%', textAlign: 'left' }}>Real Salary Score Card</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '24px', width: '100%', textAlign: 'left' }}>
-            Nominal vs. Purchasing-Power Adjusted income based on Hyderabad's 8.4% inflation.
+            Nominal vs. Purchasing-Power Adjusted income based on {homeCity}'s {localInflation}% inflation.
           </p>
 
           {/* Custom gauge using CSS variables */}
@@ -545,14 +574,14 @@ Priya Sharma`,
             <h3 style={{ fontSize: '1.25rem' }}>Geographical Cost-of-Living Simulator</h3>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            Planning a transfer or job change? Calculate the real income equivalent required in your target city to maintain Hyderabad standards.
+            Planning a transfer or job change? Calculate the real income equivalent required in your target city to maintain {homeCity} standards.
           </p>
 
           <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>CURRENT CITY</label>
               <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'var(--bg-inner-dark)', border: '1px solid var(--border-color)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                Hyderabad
+                {homeCity}
               </div>
             </div>
             <div style={{ flex: 1 }}>
@@ -660,14 +689,45 @@ Priya Sharma`,
             <span>Live from your <strong style={{ color: 'var(--primary)' }}>Budget Planner</strong> — {negCity}: personal inflation {budgetA.personalInflation.toFixed(1)}%, break-even +{budgetA.breakEvenHike.toFixed(1)}%.</span>
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-            Copy-paste this dynamically compiled pitch structure to back up your case during your upcoming appraisal reviews.
-          </p>
+          <div className="flex-between" style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+              {aiScripts[negotiationTopic]
+                ? 'AI-written pitch, grounded in your live budget data.'
+                : 'Copy-paste this dynamically compiled pitch structure to back up your case during your upcoming appraisal reviews.'}
+            </p>
+            <button
+              onClick={generateWithAI}
+              disabled={aiLoading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '12px',
+                padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--primary)',
+                backgroundColor: aiScripts[negotiationTopic] ? 'var(--primary)' : 'var(--primary-glow)',
+                color: aiScripts[negotiationTopic] ? '#fff' : 'var(--primary)',
+                fontSize: '0.75rem', fontWeight: '700', cursor: aiLoading ? 'not-allowed' : 'pointer',
+                opacity: aiLoading ? 0.6 : 1
+              }}
+            >
+              {aiLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
+              {aiLoading ? 'Writing...' : aiScripts[negotiationTopic] ? 'Regenerate with AI' : 'Write with AI'}
+            </button>
+          </div>
+
+          {aiError && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px',
+              padding: '8px 12px', borderRadius: '8px',
+              backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)',
+              fontSize: '0.75rem', color: '#f87171'
+            }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+              <span>{aiError}</span>
+            </div>
+          )}
 
           <div style={{
             flex: 1,
             backgroundColor: 'var(--bg-inner-dark)',
-            border: '1px solid var(--border-color)',
+            border: aiScripts[negotiationTopic] ? '1px solid var(--primary)' : '1px solid var(--border-color)',
             borderRadius: '8px',
             padding: '16px',
             fontSize: '0.82rem',
@@ -678,10 +738,10 @@ Priya Sharma`,
             overflowY: 'auto',
             marginBottom: '16px'
           }}>
-            {scripts[negotiationTopic]}
+            {displayedScript}
           </div>
 
-          <button 
+          <button
             onClick={copyToClipboard}
             className="btn btn-secondary"
             style={{ width: '100%', justifyContent: 'center' }}

@@ -132,6 +132,15 @@ body::after {
   pointer-events: none;
 }
 
+/* AI loading spinner (Sparkles/Loader2 buttons) */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

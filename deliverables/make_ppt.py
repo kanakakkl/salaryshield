@@ -101,7 +101,7 @@ txt(s, Inches(0.9), Inches(3.35), Inches(11.5), Inches(1.4),
     [("Quantify real-wage erosion. Justify fair corrections. Retain talent.", 18, GREY, False, True),
      ("Two-sided platform for employees and employers — powered by a City-Level Inflation Index (CLII) and a GenAI Copilot.", 15, MUTE, False, False)])
 # tech chips
-chips = ["React 19", "Vite 8", "GenAI Copilot", "CLII Engine"]
+chips = ["React 19", "Vite 8", "Google Gemini AI", "CLII Engine", "Live Employer Console"]
 cx = Inches(0.9)
 for c in chips:
     w = Inches(1.9)
@@ -125,10 +125,10 @@ content_slide("SCORING PARAMETER 1  ·  PROBLEM DEFINITION",
 # ---------------- Slide 3: Solution overview ----------------
 content_slide("SOLUTION OVERVIEW",
     "One platform, both sides of the pay table",
-    [("Employee: personal inflation rate, real-wage score, 12-month savings-depletion forecast, break-even raise %, and an AI negotiation coach.", None),
-     ("Employer: dynamic budget simulator, attrition-risk ROI, city inflation heatmap, and a pay-fairness audit.", None),
+    [("Employee: personal inflation rate, real-wage score, 12-month savings-depletion forecast, break-even raise %, an investment allocator, and an AI negotiation coach.", None),
+     ("Employer: live compensation budget simulator, attrition-risk ROI, city inflation heatmap, and a computed pay-fairness audit.", None),
      ("CLII Engine: a City-Level Inflation Index fusing rent, food, transport, utilities and education per city.", None),
-     ("GenAI Copilot: natural-language answers grounded in the user's own live numbers.", None),
+     ("GenAI Copilot: Google Gemini, answering natural-language questions grounded in the user's own live numbers.", None),
      ("Every module reads one shared model — so the story stays consistent end to end.", EMERALD)],
     accent=VIOLET)
 
@@ -142,9 +142,10 @@ s.shapes.add_picture("C:/Users/ADMIN/kkl-workspace/salaryshield/deliverables/arc
 content_slide("SCORING PARAMETER 3  ·  ENGINEERING / BUILD QUALITY",
     "Clean, verifiable, production-shaped",
     [("React 19 + Vite 8 SPA; one component per module; lucide-react icons; a CSS-variable design system (glassmorphism).", None),
-     ("Domain logic extracted into src/lib/inflation.js — a single source of truth reused by 3 modules (DRY).", EMERALD),
-     ("Pure, deterministic, testable functions: analyzeBudget(), savingsSeries(), break-even & personal-inflation engine.", None),
-     ("Production build passes — 1,779 modules, ~80 KB gzip. oxlint clean. localStorage persistence survives refresh.", None),
+     ("Domain logic extracted into src/lib/inflation.js — a single source of truth reused by all 5 modules (DRY), incl. analyzeWorkforce() for the Employer Console.", EMERALD),
+     ("Pure, deterministic, testable functions: analyzeBudget(), savingsSeries(), analyzeWorkforce(), break-even & personal-inflation engine.", None),
+     ("Cross-module consistency: changing city/salary in the Budget Planner live-syncs the Employee Portal, Coach and Copilot within 1 second.", None),
+     ("Production build passes — 1,780 modules, ~86 KB gzip. oxlint clean. localStorage persistence survives refresh.", None),
      ("Verified live in-browser during development (real DOM checks, zero console errors).", None)],
     accent=EMERALD,
     note="the whole app compiles and runs; the model layer is unit-test-ready pure functions.")
@@ -160,13 +161,14 @@ content_slide("SCORING PARAMETER 4  ·  AI APPROPRIATENESS",
 
 # ---------------- Slide 7: AI Implementation (5) ----------------
 content_slide("SCORING PARAMETER 5  ·  AI IMPLEMENTATION",
-    "Grounded, consistent, demo-safe",
-    [("GenAI Copilot answers NL questions: 'Am I underpaid?', 'What is my attrition risk?'.", None),
-     ("RAG-style grounding: the user's live budget + CLII data are injected as context, so answers cite real ₹ figures — not model priors.", None),
+    "A real, live LLM — grounded and multi-turn",
+    [("GenAI Copilot calls Google Gemini 2.0 Flash directly — a real model call, not a scripted response.", EMERALD),
+     ("RAG-style grounding: a system prompt injects the user's live budget, computed metrics, and the full CLII dataset for every city — answers cite the user's real ₹ figures, not model priors.", None),
+     ("Multi-turn: full conversation history is passed on every call, so follow-up questions stay in context.", None),
      ("One data story across surfaces: Budget Planner → Negotiation Coach → Copilot all read src/lib/inflation.js.", EMERALD),
-     ("Roadmap: LLM gateway (Claude / Azure OpenAI GPT-4o) behind a server proxy; deterministic fallback keeps the demo alive offline.", AMBER)],
+     ("Error-handled: a clear in-chat message (not a silent failure) if the API key or network is unavailable.", None)],
     accent=VIOLET,
-    note="Copilot & Coach already inject the user's real personal-inflation, break-even and target-salary numbers.")
+    note="the Copilot is wired to a real Gemini API call (src/lib/llm.js) with the user's live personal-inflation, break-even and target-salary numbers as grounding context.")
 
 # ---------------- Slide 8: AI Impact (6) ----------------
 content_slide("SCORING PARAMETER 6  ·  AI IMPACT",
@@ -197,12 +199,12 @@ content_slide("SCORING PARAMETER 8  ·  BENEFITS & VIABILITY",
 
 # ---------------- Slide 11: Working Demo (9) ----------------
 content_slide("SCORING PARAMETER 9  ·  WORKING DEMO",
-    "Live, interactive, and offline-safe",
-    [("A running MVP — not slideware. Three-minute flow:", WHITE),
-     ("1  Budget Planner — enter salary & expenses → live personal inflation, savings-depletion chart, break-even raise; push rent up → deficit alert fires.", None),
+    "Live, interactive, end to end",
+    [("A running MVP — not slideware. Four-minute flow:", WHITE),
+     ("1  Budget Planner — enter salary, city & expenses → live personal inflation, savings-depletion chart, break-even raise; push rent up → deficit alert fires.", None),
      ("2  Negotiation Coach — the pitch auto-cites those exact numbers → one-click copy.", None),
-     ("3  GenAI Copilot — 'Am I underpaid?' answers with the same live figures.", None),
-     ("Deterministic fallback means the demo never breaks, even without a network.", AMBER)],
+     ("3  GenAI Copilot — ask 'Am I underpaid?' → a real Gemini call answers with the same live figures.", None),
+     ("4  Employer Console — move the hike slider → attrition risk, ROI and fairness metrics recompute live.", None)],
     accent=AMBER)
 
 # ---------------- Slide 12: Differentiation (10) ----------------
@@ -219,16 +221,16 @@ content_slide("SCORING PARAMETER 10  ·  DIFFERENTIATION",
 s = prs.slides.add_slide(BLANK); bg(s)
 header(s, "ROADMAP & ASK", "From MVP to production", VIOLET)
 bullets(s, Inches(0.7), Inches(1.95), Inches(6.0), Inches(4.6),
-    [("Now: MVP live — CLII model, 5 modules, budget engine, grounded Copilot.", EMERALD),
-     ("Next: live data ingestion (MOSPI/RBI/rent/basket) + CLII pipeline.", None),
-     ("Next: production LLM gateway (Claude / Azure OpenAI GPT-4o) + streaming.", None),
+    [("Now: MVP live — CLII model, 5 modules, live Employer Console, budget engine, Gemini-powered Copilot.", EMERALD),
+     ("Next: live data ingestion (MOSPI/RBI/rent/basket) feeding the CLII pipeline.", None),
+     ("Next: server-side LLM proxy (key security, rate limiting) + response streaming.", None),
      ("Then: HRMS integration, auth, multi-user, historical CLII moat.", None)], size=17, gap=14)
 card_box = rect(s, Inches(7.0), Inches(1.95), Inches(5.6), Inches(4.3), PANEL, line=VIOLET, line_w=1.5, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
 txt(s, Inches(7.3), Inches(2.2), Inches(5.0), Inches(3.8),
     [("The one-line pitch", 18, VIOLET, True, False),
      ("SalaryShield turns invisible inflation into a fair, data-backed pay decision — for the employee and the employer.", 17, WHITE, False, False),
      ("", 8, WHITE, False, False),
-     ("Built with React 19 + Vite 8, a deterministic CLII engine, and a GenAI Copilot grounded in the user's real numbers.", 14, GREY, False, False)], sp_after=10)
+     ("Built with React 19 + Vite 8, a deterministic CLII engine, and a Gemini-powered GenAI Copilot grounded in the user's real numbers.", 14, GREY, False, False)], sp_after=10)
 
 prs.save("C:/Users/ADMIN/kkl-workspace/salaryshield/deliverables/SalaryShield_Pitch_Deck.pptx")
 print("saved SalaryShield_Pitch_Deck.pptx  ·  slides:", len(prs.slides._sldIdLst))

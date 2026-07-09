@@ -9,9 +9,12 @@ import {
   Info,
   Sliders,
   Award,
-  Activity
+  Activity,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { analyzeWorkforce, fmtINR } from '../lib/inflation';
+import { generateWorkforceInsight } from '../lib/llm';
 
 export default function EmployerDashboard() {
   // Budget Simulator state
@@ -31,6 +34,30 @@ export default function EmployerDashboard() {
   useEffect(() => {
     localStorage.setItem('salaryshield_employer_hike', hikePercentage);
   }, [hikePercentage]);
+
+  // AI Workforce Insight — Gemini narrates the biggest risk driver in the
+  // live analyzeWorkforce() output. The AI never computes new numbers here,
+  // it only explains numbers the engine already derived.
+  const [aiInsight, setAiInsight] = useState(null);
+  const [aiInsightHike, setAiInsightHike] = useState(null); // hike% the insight was generated for
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  const generateInsight = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const text = await generateWorkforceInsight(hikePercentage);
+      setAiInsight(text);
+      setAiInsightHike(hikePercentage);
+    } catch (err) {
+      setAiError(err.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const insightStale = aiInsight && aiInsightHike !== hikePercentage;
 
   // Everything below is DERIVED from the workforce dataset + live CLII index.
   const wf = analyzeWorkforce(hikePercentage);
@@ -395,6 +422,69 @@ export default function EmployerDashboard() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Module 3.5: AI Workforce Insight — Gemini narrates the risk data above */}
+      <div className="glass-panel" style={{ padding: '28px', marginBottom: '32px' }}>
+        <div className="flex-between" style={{ marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Sparkles size={22} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.35rem' }}>AI Workforce Insight</h3>
+          </div>
+          <button
+            onClick={generateInsight}
+            disabled={aiLoading}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--primary)',
+              backgroundColor: aiInsight ? 'var(--primary)' : 'var(--primary-glow)',
+              color: aiInsight ? '#fff' : 'var(--primary)',
+              fontSize: '0.8rem', fontWeight: '700', cursor: aiLoading ? 'not-allowed' : 'pointer',
+              opacity: aiLoading ? 0.6 : 1
+            }}
+          >
+            {aiLoading ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}
+            {aiLoading ? 'Analyzing...' : insightStale ? 'Re-analyze at new hike %' : aiInsight ? 'Re-analyze' : 'Explain this data with AI'}
+          </button>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          Gemini explains the biggest attrition/fairness risk driver from the live workforce data above — grounded in the exact numbers, no new math.
+        </p>
+
+        {aiError && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px',
+            padding: '10px 14px', borderRadius: '8px',
+            backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)',
+            fontSize: '0.78rem', color: '#f87171'
+          }}>
+            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+            <span>{aiError}</span>
+          </div>
+        )}
+
+        {aiInsight ? (
+          <div style={{
+            padding: '16px', borderRadius: '10px',
+            backgroundColor: 'var(--bg-inner-dark)', border: '1px solid var(--primary)',
+            fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', whiteSpace: 'pre-wrap'
+          }}>
+            {insightStale && (
+              <div style={{ color: 'var(--accent)', fontSize: '0.72rem', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase' }}>
+                Slider moved since this was generated — click Re-analyze for a fresh read
+              </div>
+            )}
+            {aiInsight}
+          </div>
+        ) : (
+          <div style={{
+            padding: '16px', borderRadius: '10px', textAlign: 'center',
+            backgroundColor: 'var(--bg-inner-dark)', border: '1px dashed var(--border-color)',
+            fontSize: '0.82rem', color: 'var(--text-muted)'
+          }}>
+            Click "Explain this data with AI" for a plain-English read on your biggest workforce risk right now.
+          </div>
+        )}
       </div>
 
       {/* Module 4: Fairness Audit */}

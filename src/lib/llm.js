@@ -5,7 +5,7 @@
 // Get your key at: https://aistudio.google.com/apikey
 // ---------------------------------------------------------------------------
 
-import { cliiData, analyzeBudget, fmtINR } from './inflation';
+import { cliiData, analyzeBudget, fmtINR, analyzeWorkforce } from './inflation';
 
 // ── Gemini config from .env ─────────────────────────────────────────────────
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -71,60 +71,21 @@ ${cityData}
 - You can suggest they update their Budget Planner for more accurate analysis.`;
 }
 
-// ── Call Google Gemini ───────────────────────────────────────────────────────
-/**
- * Send a message to Google Gemini and get a response.
- *
- * @param {string}   userMessage        The user's latest message
- * @param {Array}    conversationHistory Array of {role, content} for multi-turn context
- * @param {Object}   budget             The user's budget from loadBudget()
- * @returns {Promise<string>}           The assistant's reply text
- */
-export async function callLLM(userMessage, conversationHistory = [], budget) {
-  // Validate configuration - if key is not configured, fall back to high-fidelity mock responses so the demo doesn't crash!
-  if (!GEMINI_KEY || GEMINI_KEY === 'YOUR_GEMINI_API_KEY_HERE' || GEMINI_KEY.trim() === '') {
-    // Artificial latency for realism
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return generateMockAIResponse(userMessage, budget);
-  }
+// ── Low-level Gemini call (shared by all AI features below) ─────────────────
+function isConfigured() {
+  return !!(GEMINI_KEY && GEMINI_KEY !== 'YOUR_GEMINI_API_KEY_HERE' && GEMINI_KEY.trim() !== '');
+}
 
-  const systemPrompt = buildSystemPrompt(budget);
-
-  // Build the Gemini contents array from conversation history
-  // Gemini uses "user" and "model" roles (not "assistant")
-  const contents = [];
-
-  // Add conversation history
-  for (const msg of conversationHistory) {
-    contents.push({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    });
-  }
-
-  // Add the new user message
-  contents.push({
-    role: 'user',
-    parts: [{ text: userMessage }]
-  });
-
+async function callGemini(systemPrompt, contents) {
   const url = `${GEMINI_URL}?key=${GEMINI_KEY}`;
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system_instruction: {
-        parts: [{ text: systemPrompt }]
-      },
+      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-        topP: 0.95
-      }
+      generationConfig: { temperature: 0.7, maxOutputTokens: 1024, topP: 0.95 }
     })
   });
 
@@ -136,19 +97,126 @@ export async function callLLM(userMessage, conversationHistory = [], budget) {
     if (response.status === 429) {
       throw new Error('Rate limit exceeded. The free Gemini API has usage limits — please wait a moment and try again.');
     }
-    throw new Error(
-      `Gemini API returned ${response.status}: ${errorBody || response.statusText}`
-    );
+    throw new Error(`Gemini API returned ${response.status}: ${errorBody || response.statusText}`);
   }
 
   const data = await response.json();
   const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
   if (!reply) {
     throw new Error('Gemini returned an empty response. Please try rephrasing your question.');
   }
-
   return reply.trim();
+}
+
+// ── Call Google Gemini (Copilot chat) ────────────────────────────────────────
+/**
+ * Send a message to Google Gemini and get a response.
+ *
+ * @param {string}   userMessage        The user's latest message
+ * @param {Array}    conversationHistory Array of {role, content} for multi-turn context
+ * @param {Object}   budget             The user's budget from loadBudget()
+ * @returns {Promise<string>}           The assistant's reply text
+ */
+export async function callLLM(userMessage, conversationHistory = [], budget) {
+  // Validate configuration - if key is not configured, fall back to high-fidelity mock responses so the demo doesn't crash!
+  if (!isConfigured()) {
+    // Artificial latency for realism
+    await new Promise(resolve => setTimeout(resolve, 800));
+    return generateMockAIResponse(userMessage, budget);
+  }
+
+  const systemPrompt = buildSystemPrompt(budget);
+
+  // Build the Gemini contents array from conversation history
+  // Gemini uses "user" and "model" roles (not "assistant")
+  const contents = [];
+  for (const msg of conversationHistory) {
+    contents.push({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    });
+  }
+  contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
+  return callGemini(systemPrompt, contents);
+}
+
+// ── AI feature 1: Negotiation script writer (Employee Portal Coach) ─────────
+/**
+ * Have Gemini WRITE a negotiation email or in-person pitch script, grounded
+ * in the user's live budget/CLII data — instead of the fixed template.
+ *
+ * @param {Object} budget  The user's budget from loadBudget()
+ * @param {'email'|'meeting'} format
+ * @param {'formal'|'confident'|'friendly'} tone
+ * @returns {Promise<string>} The generated script text
+ */
+export async function generateNegotiationScript(budget, format = 'email', tone = 'confident') {
+  if (!isConfigured()) {
+    throw new Error('AI script generation requires a Gemini API key (VITE_GEMINI_API_KEY).');
+  }
+
+  const analysis = analyzeBudget(budget);
+  const nominalLPA = (budget.nominalSalary || 2500000) / 100000;
+  const recommendedAsk = Math.round((analysis.breakEvenHike + 7) * 10) / 10;
+  const targetLPA = nominalLPA * (1 + recommendedAsk / 100);
+
+  const systemPrompt = `You are an expert compensation negotiation coach writing on behalf of an Indian tech employee.
+Write ONLY the requested artifact — no preamble, no "here is your script" framing, no markdown headers.
+Ground every number in the LIVE DATA below; do not invent figures.
+
+## LIVE DATA
+- City: ${budget.city}
+- Nominal Salary: ₹${nominalLPA.toFixed(1)} LPA
+- Personal Inflation Rate: ${analysis.personalInflation.toFixed(1)}%
+- Annual Inflation Tax: ${fmtINR(analysis.annualInflationTax)}
+- Break-Even Hike Needed: ${analysis.breakEvenHike.toFixed(1)}%
+- Recommended Ask: ${recommendedAsk}% (target ₹${targetLPA.toFixed(1)} LPA)
+
+## Tone
+Write in a ${tone} tone.`;
+
+  const instruction = format === 'email'
+    ? 'Write a complete, ready-to-send salary correction request email (with subject line) citing the live data above.'
+    : 'Write a 3-part talking-point script for an in-person appraisal conversation (opening fact, performance/market pivot, the ask) citing the live data above.';
+
+  return callGemini(systemPrompt, [{ role: 'user', parts: [{ text: instruction }] }]);
+}
+
+// ── AI feature 2: Workforce anomaly explanation (Employer Console) ──────────
+/**
+ * Have Gemini explain, in plain English, the biggest workforce risk driver
+ * from the live analyzeWorkforce() output — a narrated diff, not new math.
+ *
+ * @param {number} hikePercent  The current corrective-hike slider value
+ * @returns {Promise<string>}   A short (~120 word) explanation
+ */
+export async function generateWorkforceInsight(hikePercent) {
+  if (!isConfigured()) {
+    throw new Error('AI insight generation requires a Gemini API key (VITE_GEMINI_API_KEY).');
+  }
+
+  const wf = analyzeWorkforce(hikePercent);
+  const cityLines = wf.cities
+    .map(c => `  ${c.city}: CLII ${c.clii}%, ${c.employees} employees, attrition risk ${c.simRisk}% (base ${c.baseRisk}%), purchasing-power gap ₹${c.gapLakh.toFixed(1)}L, threat ${c.threat}`)
+    .join('\n');
+
+  const systemPrompt = `You are an HR workforce analyst. Explain the data below in plain English for a CHRO audience.
+No markdown headers. 2-3 short paragraphs, under 130 words total. Be specific with numbers from the data — do not invent any.
+Identify the single riskiest city and why, and one concrete recommendation tied to the current ${hikePercent}% corrective hike.
+
+## LIVE WORKFORCE DATA (at ${hikePercent}% corrective hike)
+${cityLines}
+
+- Headcount-weighted inflation: ${wf.weightedInflation.toFixed(2)}%
+- Attrition risk: ${wf.baseAttrition}% (no hike) -> ${wf.simAttrition}% (at ${hikePercent}% hike)
+- Employees retained by this hike: ${wf.employeesRetained}
+- Additional budget required: ${fmtINR(wf.additionalBudget)}
+- Replacement cost prevented: ${fmtINR(wf.replacementSavings)}
+- ROI multiplier: ${wf.roiMultiplier.toFixed(1)}x
+- Gender wage gap: ${wf.genderGap.toFixed(1)}%`;
+
+  return callGemini(systemPrompt, [{ role: 'user', parts: [{ text: 'Explain this workforce risk data.' }] }]);
 }
 
 /**

@@ -39,9 +39,11 @@ def card(x0, y0, x1, y1, title, sub=None, accent=VIOLET, fill=CARD, tsize=34, ss
     else:
         ctext(cx, (y0 + y1) / 2, title, fb(tsize), WHITE)
     if tag:
+        tag_color = EMERALD if tag == "LIVE" else AMBER
+        tag_bg = (10, 45, 30) if tag == "LIVE" else (60, 45, 10)
         tw = d.textlength(tag, font=fb(18)) + 24
-        d.rounded_rectangle([x1 - tw - 16, y0 + 14, x1 - 16, y0 + 46], radius=10, fill=(60, 45, 10), outline=AMBER, width=2)
-        ctext(x1 - tw / 2 - 16, y0 + 30, tag, fb(18), AMBER)
+        d.rounded_rectangle([x1 - tw - 16, y0 + 14, x1 - 16, y0 + 46], radius=10, fill=tag_bg, outline=tag_color, width=2)
+        ctext(x1 - tw / 2 - 16, y0 + 30, tag, fb(18), tag_color)
 
 def arrow(cx, y0, y1, color=VIOLET):
     d.line([cx, y0, cx, y1 - 14], fill=color, width=4)
@@ -66,11 +68,11 @@ box(M, py0, W - M, py1, fill=PANEL, border=VIOLET, w=3)
 ctext(M + 34, py0 + 34, "PRESENTATION LAYER", fb(26), VIOLET, anchor="lm")
 ctext(W - M - 34, py0 + 34, "React 19 · Vite 8 · lucide-react · CSS glassmorphism", fr(22), GREY, anchor="rm")
 mods = [
-    ("Employer\nConsole", "Budget simulator,\nattrition ROI", EMERALD),
+    ("Employer\nConsole", "Live attrition/ROI sim,\nfairness audit", EMERALD),
     ("Employee\nPortal", "Real-wage score,\nnegotiation coach", VIOLET),
-    ("My Budget &\nInflation", "Personal inflation,\nsavings depletion", AMBER),
+    ("My Budget &\nInflation", "Personal inflation,\nsavings + investing", AMBER),
     ("CLII\nEngine", "City inflation\nindex + trends", BLUE),
-    ("GenAI\nCopilot", "NL Q&A grounded\non user data", VIOLET),
+    ("GenAI\nCopilot", "Gemini-powered,\ngrounded on user data", VIOLET),
 ]
 n = len(mods)
 gap = 26
@@ -105,15 +107,15 @@ arrow(W/2, py1, sy0, VIOLET)
 # ---- Row 4: Domain / Model ----
 dy0, dy1 = 900, 1010
 card(M, dy0, W - M, dy1, "DOMAIN MODEL LAYER  —  src/lib/inflation.js  (single source of truth)",
-     "CLII data model · analyzeBudget() · savingsSeries() · personal-inflation & break-even engine",
+     "CLII data · analyzeBudget() · savingsSeries() · analyzeWorkforce() · break-even engine",
      accent=EMERALD, fill=PANEL, tsize=28, ssize=23)
 arrow(W/2, sy1, dy0, BLUE)
 
 # ---- Row 5: AI Layer ----
 ay0, ay1 = 1090, 1210
-card(M, ay0, W - M, ay1, "AI LAYER  —  GenAI Copilot",
-     "LLM Gateway → Claude / Azure OpenAI GPT-4o  ·  RAG grounding on CLII + live user budget",
-     accent=VIOLET, fill=PANEL, tsize=28, ssize=23, tag="ROADMAP: live LLM")
+card(M, ay0, W - M, ay1, "AI LAYER  —  GenAI Copilot  (src/lib/llm.js)",
+     "Google Gemini 2.0 Flash  ·  system prompt grounded on live CLII + user budget  ·  multi-turn",
+     accent=VIOLET, fill=PANEL, tsize=28, ssize=23, tag="LIVE")
 arrow(W/2, dy1, ay0, EMERALD)
 
 # ---- Row 6: Ingestion ----
