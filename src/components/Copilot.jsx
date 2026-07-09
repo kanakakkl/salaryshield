@@ -7,9 +7,11 @@ import {
   HelpCircle, 
   ArrowRight,
   TrendingUp,
-  BrainCircuit
+  BrainCircuit,
+  AlertTriangle
 } from 'lucide-react';
 import { loadBudget, analyzeBudget, fmtINR } from '../lib/inflation';
+import { callLLM } from '../lib/llm';
 
 export default function Copilot() {
   const [messages, setMessages] = useState([
@@ -38,62 +40,18 @@ export default function Copilot() {
 
   // Pull the user's live budget so the Copilot answers with their real numbers
   const budget = loadBudget();
-  const bA = analyzeBudget(budget);
-  const nominalLPA = 25.0;
-  const recommendedAsk = Math.round((bA.breakEvenHike + 7) * 10) / 10;
-  const targetLPA = nominalLPA * (1 + recommendedAsk / 100);
-  const realLPA = nominalLPA * (1 - bA.personalInflation / 100);
 
-  const getSimulatedResponse = (queryType) => {
-    switch (queryType) {
-      case 'underpaid':
-        return `Based on your profile as a **Tech Lead** in **${budget.city}** earning **₹${nominalLPA.toFixed(1)} LPA**:
-
-1. **Purchasing Power Loss**: Your **personal inflation** (computed live from your Budget Planner spending mix) is **${bA.personalInflation.toFixed(1)}%**, eroding roughly **${fmtINR(bA.annualInflationTax)}** of your annual take-home. In real terms your ₹${nominalLPA.toFixed(1)} LPA is now worth about **₹${realLPA.toFixed(1)} LPA**.
-2. **Break-Even Threshold**: You would need a **${bA.breakEvenHike.toFixed(1)}%** correction just to keep your current savings steady against ${budget.city}'s cost curve.
-3. **Recommendation**: Factoring in market benchmarks, request a corrective adjustment of **${recommendedAsk}%** to bring your salary to **₹${targetLPA.toFixed(1)} LPA**, moving you toward the **75th percentile** and fully shielding you against local inflation.`;
-
-      case 'attrition':
-        return `Your individual flight risk scoring breakdown:
-
-* **Inflation Lag Score**: High (personal inflation running at **${bA.personalInflation.toFixed(1)}%** with no correction in the past 12 months).
-* **Savings Erosion**: At current pay your monthly savings fall from **${fmtINR(bA.savings)}** to **${fmtINR(bA.projectedSavings)}** next year — a key driver of exit intent.
-* **Estimated Attrition Probability**: **64%** (Categorized as **High Alert Zone**).
-
-**HR Retention Recommendation**: A proactive **${recommendedAsk}%** alignment within the next 30 days will reduce your flight risk to **18%**, saving the company an estimated **₹37.5 Lakhs** in direct recruitment, training, and onboarding costs.`;
-
-      case 'hyderabad_rent':
-        return `**Hyderabad Rent Inflation Breakdown (CLII Engine Analysis)**:
-
-* **Regional Rent Index**: **+12.2%** over the last 12 months (IT Corridor zones like Financial District, Gachibowli, Hitec City, Madhapur).
-* **Key Drivers**:
-  1. Return-to-office (RTO) mandates leading to high occupancy demands near tech parks.
-  2. Construction supply chain bottlenecks for premium gated complexes.
-  3. Utility cost hikes (+5.2%) passed down by landlords to tenants.
-
-**Impact**: This housing surge accounts for **55%** of your total purchasing power erosion this fiscal year.`;
-
-      case 'skills':
-        return `To shield your salary against inflation, we recommend acquiring high-premium, inflation-resilient skills:
-
-1. **Generative AI & LLM Engineering**: Current market premium of **+22%**. Average salary for certified engineers is **₹30.5 LPA**.
-2. **MLOps & Pipeline Deployment**: Current market premium of **+18%**. Highly sought after as companies move models to production.
-3. **Cloud Native / Kubernetes**: Current market premium of **+15%**. Focus on high-availability container architectures.
-
-Learning just one of these and adding it to your appraisal packet can boost your market value by up to **₹5.5 Lakhs**.`;
-
-      default:
-        return `I've analyzed your question against your live profile in **${budget.city}**. Based on SalaryShield's core modules, our AI engine suggests:
-
-* Your **personal inflation** is **${bA.personalInflation.toFixed(1)}%** — a **${bA.breakEvenHike.toFixed(1)}%** raise is the break-even floor to protect your savings.
-* Incorporating skills like **Generative AI** (+22% premium) or **MLOps** (+18% premium) to offset real-wage erosion.
-* Targeting a **${recommendedAsk}%** correction (≈ ₹${targetLPA.toFixed(1)} LPA) to align to market and decrease talent flight risk below 30%.
-
-Is there a specific city, skill, or role benchmark you would like me to audit?`;
-    }
+  // Build conversation history from messages (for multi-turn context)
+  const getConversationHistory = () => {
+    return messages
+      .filter((_, idx) => idx > 0) // skip the initial greeting
+      .map(msg => ({
+        role: msg.sender === 'ai' ? 'assistant' : 'user',
+        content: msg.text
+      }));
   };
 
-  const handleSend = (text, type = null) => {
+  const handleSend = async (text) => {
     if (!text.trim()) return;
 
     // Add user message
@@ -106,17 +64,29 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const responseText = getSimulatedResponse(type || 'default');
+    try {
+      // Call real LLM with conversation history + budget context
+      const history = getConversationHistory();
+      const responseText = await callLLM(text, history, budget);
+
       const aiMsg = {
         sender: 'ai',
         text: responseText,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      console.error('LLM call failed:', error);
+      const errorMsg = {
+        sender: 'ai',
+        text: `⚠️ **Error contacting AI engine**: ${error.message}\n\nPlease check your Google Gemini configuration in the \`.env\` file and ensure your API key is correct.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -156,7 +126,16 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
             boxShadow: '0 0 8px var(--secondary)'
           }} />
           <BrainCircuit size={18} color="var(--primary)" />
-          <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Azure OpenAI GPT-4o RAG Pipeline</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Google Gemini 2.0 Flash Agent</span>
+          <span style={{ 
+            fontSize: '0.65rem', 
+            color: 'var(--secondary)', 
+            marginLeft: 'auto',
+            padding: '2px 8px',
+            borderRadius: '10px',
+            border: '1px solid var(--secondary)',
+            opacity: 0.8
+          }}>LIVE</span>
         </div>
 
         {/* Message area */}
@@ -186,30 +165,30 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: isAi ? 'var(--primary)' : '#4b5563',
+                  backgroundColor: msg.isError ? 'var(--danger)' : isAi ? 'var(--primary)' : '#4b5563',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                   boxShadow: isAi ? '0 0 10px var(--primary-glow)' : 'none'
                 }}>
-                  {isAi ? <Bot size={16} color="white" /> : <User size={16} color="white" />}
+                  {msg.isError ? <AlertTriangle size={16} color="white" /> : isAi ? <Bot size={16} color="white" /> : <User size={16} color="white" />}
                 </div>
 
                 {/* Bubble */}
                 <div>
                   <div style={{
-                    backgroundColor: isAi ? 'var(--bg-secondary)' : 'var(--primary)',
+                    backgroundColor: msg.isError ? 'rgba(239, 68, 68, 0.1)' : isAi ? 'var(--bg-secondary)' : 'var(--primary)',
                     color: 'white',
                     padding: '14px 18px',
                     borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px',
-                    border: isAi ? '1px solid var(--border-color)' : 'none',
+                    border: msg.isError ? '1px solid var(--danger)' : isAi ? '1px solid var(--border-color)' : 'none',
                     fontSize: '0.9rem',
                     lineHeight: '1.5',
                     whiteSpace: 'pre-wrap'
                   }}>
                     {isAi ? (
-                      // Parse basic markdown in mock responses for beautiful presentation
+                      // Parse basic markdown in responses for beautiful presentation
                       msg.text.split('\n').map((line, lIdx) => {
                         if (line.startsWith('**') || line.includes('**')) {
                           // Simple bold replacement
@@ -290,23 +269,27 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
           {quickQuestions.map((q, idx) => (
             <button
               key={idx}
-              onClick={() => handleSend(q.text, q.value)}
+              onClick={() => handleSend(q.text)}
+              disabled={isTyping}
               style={{
                 background: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '20px',
                 padding: '6px 12px',
                 fontSize: '0.78rem',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
+                color: isTyping ? 'var(--text-muted)' : 'var(--text-secondary)',
+                cursor: isTyping ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '4px',
+                opacity: isTyping ? 0.5 : 1
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = 'white';
+                if (!isTyping) {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.color = 'white';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--border-color)';
@@ -338,6 +321,7 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your compensation or inflation query here..."
+            disabled={isTyping}
             style={{
               flex: 1,
               backgroundColor: 'var(--bg-secondary)',
@@ -347,7 +331,8 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
               color: 'white',
               fontSize: '0.9rem',
               outline: 'none',
-              transition: 'border-color 0.2s ease'
+              transition: 'border-color 0.2s ease',
+              opacity: isTyping ? 0.6 : 1
             }}
             onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
             onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
@@ -355,7 +340,8 @@ Is there a specific city, skill, or role benchmark you would like me to audit?`;
           <button 
             type="submit"
             className="btn btn-primary"
-            style={{ padding: '0 20px' }}
+            disabled={isTyping || !input.trim()}
+            style={{ padding: '0 20px', opacity: (isTyping || !input.trim()) ? 0.5 : 1 }}
           >
             <Send size={16} />
           </button>
